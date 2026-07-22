@@ -1,0 +1,42 @@
+.page {
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.main {
+  width: min(100%, var(--container-width));
+  margin: 0 auto;
+  padding: 0 40px 80px;
+}
+
+.wide {
+  width: min(100%, 1400px);
+}
+
+.header {
+  padding: 100px 0 48px;
+}
+
+.title {
+  margin: 0;
+  font-size: 2.8rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.subtitle {
+  margin: 16px 0 0;
+  font-size: 1.08rem;
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 680px;
+}
+
+@media (max-width: 768px) {
+  .main { padding: 0 24px 60px; }
+  .title { font-size: 2rem; }
+  .header { padding: 90px 0 32px; }
+}

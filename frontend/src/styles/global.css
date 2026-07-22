@@ -1,0 +1,117 @@
+:root {
+  --font-display: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+
+  /* Premium Color Palette */
+  --primary: #2563eb;
+  --primary-light: #3b82f6;
+  --primary-dark: #1d4ed8;
+  --secondary: #06b6d4;
+  --secondary-light: #14b8a6;
+  --accent: #7c3aed;
+  --success: #22c55e;
+
+  /* Neutrals */
+  --ink: #0f172a;
+  --ink-light: #1e293b;
+  --muted: #64748b;
+  --muted-light: #94a3b8;
+  --border: #e5e7eb;
+  --border-light: rgba(226, 232, 240, 0.6);
+  --bg-light: #f8fafc;
+  --white: #ffffff;
+
+  /* Spacing System */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 48px;
+  --space-4xl: 56px;
+  --space-5xl: 64px;
+
+  /* Section Spacing (per spec) */
+  --nav-to-hero: 32px;
+  --hero-to-features: 56px;
+  --features-to-stats: 48px;
+  --stats-to-footer: 64px;
+
+  /* Layout */
+  --container-width: 1280px;
+  --navbar-height: 76px;
+  --section-padding: 64px;
+  --hero-top: 32px;
+  --hero-bottom: 56px;
+  --hero-gap: 64px;
+  --card-gap: 24px;
+  --radius-xl: 24px;
+  --radius-lg: 20px;
+  --radius-nav: 22px;
+  --shadow-soft: 0 10px 40px rgba(15, 23, 42, 0.08);
+  --shadow-hover: 0 18px 50px rgba(37, 99, 235, 0.16);
+  --shadow-nav: 0 8px 32px rgba(15, 23, 42, 0.08);
+  --shadow-card-hover: 0 24px 50px rgba(15, 23, 42, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, #dbeafe 0%, transparent 32%),
+    radial-gradient(circle at bottom right, #e0f2fe 0%, transparent 28%),
+    linear-gradient(180deg, #f8fbff 0%, #f9fcff 40%, #ffffff 100%);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+a,
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+::selection {
+  background: #bfdbfe;
+  color: #0f172a;
+}
+
+section {
+  position: relative;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle, rgba(37, 99, 235, 0.03) 1px, transparent 1px);
+  background-size: 36px 36px;
+  opacity: 0.4;
+}

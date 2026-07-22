@@ -1,0 +1,402 @@
+/* ===================================== */
+/* GRID */
+/* ===================================== */
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* ===================================== */
+/* PANELS */
+/* ===================================== */
+
+.panel {
+  position: relative;
+  overflow: hidden;
+  padding: 30px;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.07);
+  transition: 0.3s transform, 0.3s box-shadow, 0.3s border;
+}
+
+.panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.25),
+    rgba(6, 182, 212, 0.18),
+    transparent
+  );
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.panel:hover {
+  transform: translateY(-4px);
+  border-color: rgba(37, 99, 235, 0.18);
+  box-shadow: 0 24px 50px rgba(15, 23, 42, 0.1);
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 6px;
+  color: var(--primary);
+}
+
+.panelHead h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.desc {
+  margin: 6px 0 20px;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.hint {
+  display: block;
+  margin-top: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(37, 99, 235, 0.06);
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  font-size: 0.85rem;
+  color: var(--primary);
+}
+
+/* ===================================== */
+/* RADIO GROUPS */
+/* ===================================== */
+
+.radioGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.radioCard {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--ink);
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s border, 0.3s background, 0.3s transform, 0.3s box-shadow;
+  user-select: none;
+}
+
+.radioCard input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.radioCard:has(input:checked) {
+  border-color: rgba(37, 99, 235, 0.4);
+  background: rgba(37, 99, 235, 0.06);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.radioCard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(37, 99, 235, 0.25);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+.radioCard:has(input:focus-visible) {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.radioIndicator {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.25s border, 0.25s background;
+  flex-shrink: 0;
+}
+
+.radioCard:has(input:checked) .radioIndicator {
+  border-color: var(--primary);
+  background: var(--primary);
+  box-shadow: inset 0 0 0 3px white;
+}
+
+.radioLabel {
+  font-size: 0.95rem;
+}
+
+/* ===================================== */
+/* TOGGLE */
+/* ===================================== */
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-radius: 20px;
+  background: rgba(248, 250, 252, 0.94);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: 0.3s border, 0.3s background;
+}
+
+.toggleRow:hover {
+  border-color: rgba(37, 99, 235, 0.18);
+}
+
+.toggleLabel {
+  flex: 1;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.toggle {
+  position: relative;
+  width: 50px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.toggleSlider {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: #cbd5e1;
+  transition: 0.3s background;
+  cursor: pointer;
+}
+
+.toggleSlider::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  transition: 0.3s transform;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.toggle input:checked + .toggleSlider {
+  background: var(--primary);
+}
+
+.toggle input:checked + .toggleSlider::before {
+  transform: translateX(22px);
+}
+
+.toggle input:focus-visible + .toggleSlider {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.toggleState {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--muted);
+  min-width: 32px;
+}
+
+/* ===================================== */
+/* NUMBER INPUT */
+/* ===================================== */
+
+.numberInputWrap {
+  display: flex;
+}
+
+.numberLabel {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.numberInput {
+  width: 80px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+  transition: 0.3s border, 0.3s box-shadow;
+}
+
+.numberInput:focus {
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+}
+
+/* ===================================== */
+/* API ENDPOINT */
+/* ===================================== */
+
+.apiField {
+  display: grid;
+  gap: 10px;
+}
+
+.apiInput {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: rgba(248, 250, 252, 0.94);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  outline: none;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.apiHint {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.apiHint code {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(203, 213, 225, 0.2);
+  font-size: 0.82rem;
+}
+
+/* ===================================== */
+/* SAVE */
+/* ===================================== */
+
+.saveSection {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  grid-column: 1 / -1;
+}
+
+.saveBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 32px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #2563eb, #06b6d4);
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: 0.3s transform, 0.3s box-shadow;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.25);
+}
+
+.saveBtn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 32px rgba(37, 99, 235, 0.35);
+}
+
+.saveBtn:active {
+  transform: translateY(0);
+}
+
+.saveToast {
+  color: #16a34a;
+  font-weight: 600;
+  font-size: 0.95rem;
+  animation: fadeInOut 2.5s ease forwards;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(6px); }
+  15% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-6px); }
+}
+
+/* ===================================== */
+/* RESPONSIVE */
+/* ===================================== */
+
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .saveSection {
+    grid-column: 1;
+  }
+
+  .panel {
+    padding: 26px;
+  }
+}
+
+@media (max-width: 768px) {
+  .panel {
+    padding: 22px;
+    border-radius: 24px;
+  }
+
+  .radioGroup {
+    flex-direction: column;
+  }
+
+  .radioCard {
+    width: 100%;
+  }
+
+  .numberLabel {
+    width: 100%;
+  }
+
+  .numberInput {
+    flex: 1;
+  }
+
+  .saveBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}

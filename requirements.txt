@@ -1,0 +1,14 @@
+fastapi
+matplotlib
+numpy
+pandas
+pydantic
+pyfaidx
+pytest
+reportlab
+scikit-learn
+tensorflow
+torch
+tqdm
+transformers
+uvicorn

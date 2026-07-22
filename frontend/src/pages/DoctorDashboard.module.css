@@ -1,0 +1,513 @@
+.page {
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ===================================== */
+/* GRID LAYOUT */
+/* ===================================== */
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+/* ===================================== */
+/* PANELS */
+/* ===================================== */
+
+.panel {
+  position: relative;
+  overflow: hidden;
+  padding: 34px;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.07);
+}
+
+.panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(37, 99, 235, 0.25),
+      rgba(6, 182, 212, 0.18),
+      transparent
+    );
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.panelHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.panelHead h2 {
+  margin: 14px 0 0;
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.panelKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.16);
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(14px);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.95);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ===================================== */
+/* MAIN PREDICTION CARD */
+/* ===================================== */
+
+.mainCard {
+  padding: 28px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(37,99,235,0.06), rgba(6,182,212,0.06));
+  border: 1px solid rgba(37,99,235,0.12);
+  margin-bottom: 24px;
+}
+
+.mainDisease {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+
+.mainMeta {
+  margin-top: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.metaLabel {
+  font-weight: 700;
+  color: var(--ink);
+  min-width: 80px;
+}
+
+/* ===================================== */
+/* CIRCULAR GAUGE */
+/* ===================================== */
+
+.gaugeWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.gauge {
+  position: relative;
+  width: 100px;
+  height: 100px;
+}
+
+.gaugeSvg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.gaugeCircle {
+  fill: none;
+  stroke-width: 10;
+  stroke: rgba(226, 232, 240, 0.8);
+}
+
+.gaugeFill {
+  fill: none;
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.2s ease;
+}
+
+.gaugeCenter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.gaugeLabel {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ===================================== */
+/* PATIENT METRICS */
+/* ===================================== */
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.metricCard {
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(248, 250, 252, 0.94);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  transition:
+    0.3s transform,
+    0.3s box-shadow,
+    0.3s border;
+}
+
+.metricCard:hover {
+  transform: translateY(-4px);
+  border-color: rgba(37, 99, 235, 0.22);
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.08);
+}
+
+.metricLabel {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.metricValue {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+/* ===================================== */
+/* RECOMMENDATIONS */
+/* ===================================== */
+
+.recommendationsBox {
+  padding: 22px;
+  border-radius: 20px;
+  background: rgba(248, 250, 252, 0.94);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  margin-bottom: 24px;
+}
+
+.recommendationsBox h4 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.recommendationItem {
+  padding: 8px 0;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--muted);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+.recommendationItem:last-child {
+  border-bottom: none;
+}
+
+/* ===================================== */
+/* NOTES TEXTAREA */
+/* ===================================== */
+
+.notesField {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.notesField span {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.notesField textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.7;
+  resize: vertical;
+  outline: none;
+  transition:
+    0.3s border,
+    0.3s box-shadow;
+}
+
+.notesField textarea:focus {
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow:
+    0 0 0 5px rgba(37, 99, 235, 0.1),
+    0 14px 30px rgba(37, 99, 235, 0.08);
+}
+
+/* ===================================== */
+/* DOWNLOAD BUTTON */
+/* ===================================== */
+
+.downloadBtn {
+  min-height: 52px;
+  padding: 0 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 18px;
+  border: none;
+  background: linear-gradient(135deg, var(--primary), #0e7c86);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition:
+    0.3s transform,
+    0.3s box-shadow;
+  margin-bottom: 24px;
+}
+
+.downloadBtn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 36px rgba(37, 99, 235, 0.25);
+}
+
+.downloadBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ===================================== */
+/* PREDICTIONS LIST */
+/* ===================================== */
+
+.listWrapper {
+  overflow-x: auto;
+  border-radius: 20px;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.table th {
+  text-align: left;
+  padding: 14px 16px;
+  background: rgba(248, 250, 252, 0.94);
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+}
+
+.table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tr:hover td {
+  background: rgba(248, 250, 252, 0.6);
+}
+
+.confidenceBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.barTrack {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(226, 232, 240, 0.7);
+  overflow: hidden;
+  max-width: 80px;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.modelBadge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+/* ===================================== */
+/* LOADING */
+/* ===================================== */
+
+.loading {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.spinner {
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  border: 3px solid rgba(37, 99, 235, 0.12);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===================================== */
+/* ERROR */
+/* ===================================== */
+
+.errorBox {
+  padding: 20px;
+  border-radius: 20px;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  color: #b91c1c;
+  line-height: 1.6;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  padding: 48px 24px;
+  text-align: center;
+  background: rgba(248, 250, 252, 0.7);
+  border-radius: 20px;
+  border: 1px dashed var(--border);
+}
+
+/* ===================================== */
+/* RESPONSIVE */
+/* ===================================== */
+
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metricsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .panel {
+    padding: 24px;
+    border-radius: 24px;
+  }
+
+  .panelHead {
+    flex-direction: column;
+  }
+
+  .metricsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .mainDisease {
+    font-size: 1.7rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .panel {
+    padding: 20px;
+  }
+
+  .notesField textarea {
+    min-height: 100px;
+  }
+}

@@ -1,0 +1,251 @@
+/* =============================================
+   Animated DNA — Premium Helix Visualization
+   ============================================= */
+
+.stage {
+  position: relative;
+  width: min(100%, 700px);
+  aspect-ratio: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: auto;
+  animation: stageFloat 10s ease-in-out infinite;
+}
+
+/* ============================================= */
+/* Halo — Soft blue glow behind the DNA */
+/* ============================================= */
+
+.halo {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle,
+      rgba(59, 130, 246, 0.30) 0%,
+      rgba(37, 99, 235, 0.18) 30%,
+      rgba(6, 182, 212, 0.10) 55%,
+      transparent 78%
+    );
+  filter: blur(30px);
+  animation: breathe 7s ease-in-out infinite;
+}
+
+/* ============================================= */
+/* Rings — Orbital decorative circles */
+/* ============================================= */
+
+.ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.ringOne {
+  inset: 2%;
+  animation: spin 26s linear infinite;
+}
+
+.ringTwo {
+  inset: 12%;
+  border-color: rgba(6, 182, 212, 0.16);
+  animation: spinReverse 34s linear infinite;
+}
+
+.ringThree {
+  inset: 22%;
+  border-color: rgba(37, 99, 235, 0.14);
+  animation: spin 42s linear infinite;
+}
+
+/* ============================================= */
+/* Helix — DNA SVG image */
+/* ============================================= */
+
+.helix {
+  width: 92%;
+  height: 92%;
+  object-fit: contain;
+  position: relative;
+  z-index: 5;
+  filter:
+    drop-shadow(0 40px 70px rgba(37, 99, 235, 0.22))
+    drop-shadow(0 10px 20px rgba(59, 130, 246, 0.12));
+  animation:
+    dnaFloat 8s ease-in-out infinite,
+    dnaRotate 18s ease-in-out infinite;
+}
+
+/* ============================================= */
+/* Particles — Medical / scientific nodes */
+/* ============================================= */
+
+.particle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #ffffff, #60a5fa);
+  box-shadow:
+    0 0 18px rgba(96, 165, 250, 0.65);
+}
+
+.p1 {
+  top: 14%;
+  left: 10%;
+  animation: orbitOne 11s infinite ease-in-out;
+}
+
+.p2 {
+  right: 14%;
+  top: 24%;
+  animation: orbitTwo 13s infinite ease-in-out;
+}
+
+.p3 {
+  bottom: 16%;
+  left: 18%;
+  animation: orbitThree 12s infinite ease-in-out;
+}
+
+/* ============================================= */
+/* Nodes — Nucleotide base indicators */
+/* ============================================= */
+
+.node {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  opacity: 0.7;
+  animation: nodePulse 4s ease-in-out infinite;
+}
+
+.nodeA {
+  top: 28%;
+  right: 22%;
+  background: rgba(37, 99, 235, 0.15);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  color: #3b82f6;
+}
+
+.nodeG {
+  bottom: 32%;
+  left: 20%;
+  background: rgba(6, 182, 212, 0.15);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  color: #06b6d4;
+  animation-delay: 1s;
+}
+
+.nodeC {
+  top: 18%;
+  left: 28%;
+  background: rgba(124, 58, 237, 0.15);
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  color: #a855f7;
+  animation-delay: 2s;
+}
+
+.nodeT {
+  bottom: 22%;
+  right: 28%;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  color: #22c55e;
+  animation-delay: 3s;
+}
+
+/* ============================================= */
+/* Binary — Code digits around the helix */
+/* ============================================= */
+
+.binary {
+  position: absolute;
+  font-size: 0.82rem;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.25em;
+  color: rgba(37, 99, 235, 0.30);
+  animation: binaryFloat 8s ease-in-out infinite;
+}
+
+.binaryA {
+  top: 18%;
+  right: 16%;
+}
+
+.binaryB {
+  right: 6%;
+  top: 48%;
+  animation-delay: 2s;
+}
+
+.binaryC {
+  bottom: 18%;
+  right: 22%;
+  animation-delay: 1s;
+}
+
+/* ============================================= */
+/* Keyframes */
+/* ============================================= */
+
+@keyframes stageFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes dnaFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-16px); }
+}
+
+@keyframes dnaRotate {
+  0%, 100% { rotate: -2deg; }
+  50% { rotate: 2deg; }
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.75; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spinReverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0); }
+}
+
+@keyframes orbitOne {
+  50% { transform: translate(20px, -12px); }
+}
+
+@keyframes orbitTwo {
+  50% { transform: translate(-18px, 16px); }
+}
+
+@keyframes orbitThree {
+  50% { transform: translate(16px, -18px); }
+}
+
+@keyframes binaryFloat {
+  0%, 100% { transform: translateY(0); opacity: 0.45; }
+  50% { transform: translateY(-10px); opacity: 0.8; }
+}
+
+@keyframes nodePulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+}
+

@@ -1,0 +1,304 @@
+.page {
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.main {
+  width: min(100%, var(--container-width));
+  margin: 0 auto;
+  padding: 0 40px 80px;
+}
+
+.header {
+  padding: 56px 0 48px;
+}
+
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.16);
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(14px);
+  margin-bottom: 16px;
+}
+
+.header h1 {
+  margin: 0 0 16px;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.header p {
+  margin: 0;
+  max-width: 680px;
+  color: var(--muted);
+  font-size: 1.08rem;
+  line-height: 1.85;
+}
+
+/* Stats Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.statCard {
+  position: relative;
+  overflow: hidden;
+  padding: 28px;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.07);
+  transition: 0.3s transform, 0.3s box-shadow, 0.3s border;
+}
+
+.statCard:hover {
+  transform: translateY(-4px);
+  border-color: rgba(37, 99, 235, 0.22);
+  box-shadow: 0 24px 50px rgba(15, 23, 42, 0.1);
+}
+
+.statCard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.25), rgba(6, 182, 212, 0.18), transparent);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.statIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--primary);
+  margin-bottom: 14px;
+}
+
+.statLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.statValue {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+/* Panel */
+.panel {
+  position: relative;
+  overflow: hidden;
+  padding: 34px;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.07);
+  margin-bottom: 28px;
+}
+
+.panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.25), rgba(6, 182, 212, 0.18), transparent);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.panel h2 {
+  margin: 0 0 24px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.panel h3 {
+  margin: 0 0 20px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* Charts Row */
+.chartsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  margin-bottom: 28px;
+}
+
+.chartContainer {
+  width: 100%;
+  height: 300px;
+}
+
+/* Horizontal Bar Chart */
+.hBarItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.hBarLabel {
+  min-width: 110px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--ink);
+  text-align: right;
+}
+
+.hBarTrack {
+  flex: 1;
+  height: 32px;
+  border-radius: 16px;
+  background: rgba(226, 232, 240, 0.5);
+  overflow: hidden;
+  position: relative;
+}
+
+.hBarFill {
+  height: 100%;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  transition: width 1.2s ease;
+}
+
+.hBarFill span {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.hBarValue {
+  min-width: 60px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--ink);
+  text-align: left;
+}
+
+/* Nucleotide / Mutation */
+.freqRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding: 14px 18px;
+  border-radius: 20px;
+  background: rgba(248, 250, 252, 0.94);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  transition: 0.3s transform;
+}
+
+.freqRow:hover {
+  transform: translateY(-2px);
+}
+
+.freqLabel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+.freqTrack {
+  flex: 1;
+  height: 20px;
+  border-radius: 10px;
+  background: rgba(226, 232, 240, 0.5);
+  overflow: hidden;
+}
+
+.freqFill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 1s ease;
+}
+
+.freqPercent {
+  min-width: 70px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ink);
+  text-align: right;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .main {
+    padding: 0 32px 70px;
+  }
+  .chartsRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .main {
+    padding: 0 22px 60px;
+  }
+  .statsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .panel {
+    padding: 24px;
+    border-radius: 24px;
+  }
+  .header h1 {
+    font-size: 2rem;
+  }
+  .chartContainer {
+    height: 240px;
+  }
+  .statValue {
+    font-size: 1.4rem;
+  }
+  .hBarLabel {
+    min-width: 80px;
+    font-size: 0.8rem;
+  }
+}

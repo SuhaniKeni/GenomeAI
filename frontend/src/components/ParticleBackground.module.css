@@ -1,0 +1,180 @@
+/* =============================================
+   Particle Background — Premium Medical Gradient
+   ============================================= */
+
+.background {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(37, 99, 235, 0.10), transparent 32%),
+    radial-gradient(circle at 88% 12%, rgba(6, 182, 212, 0.08), transparent 28%),
+    radial-gradient(circle at 50% 85%, rgba(59, 130, 246, 0.05), transparent 38%),
+    linear-gradient(180deg, #f8fbff 0%, #f5f8fc 45%, #f9fbff 100%);
+}
+
+/* Gradient blobs */
+.blobOne,
+.blobTwo,
+.blobThree {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  animation: blobFloat 18s ease-in-out infinite;
+}
+
+.blobOne {
+  width: 520px;
+  height: 520px;
+  top: -180px;
+  left: -140px;
+  background: rgba(37, 99, 235, 0.12);
+}
+
+.blobTwo {
+  width: 620px;
+  height: 620px;
+  right: -220px;
+  top: 120px;
+  background: rgba(6, 182, 212, 0.08);
+  animation-delay: -9s;
+}
+
+.blobThree {
+  width: 400px;
+  height: 400px;
+  left: 50%;
+  bottom: -160px;
+  background: rgba(124, 58, 237, 0.05);
+  animation-delay: -4s;
+}
+
+/* Scientific grid pattern */
+.grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.08;
+  background-image:
+    linear-gradient(rgba(37, 99, 235, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 99, 235, 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image:
+    radial-gradient(circle at center,
+      black 18%,
+      rgba(0, 0, 0, 0.9) 42%,
+      transparent 88%);
+  -webkit-mask-image:
+    radial-gradient(circle at center,
+      black 18%,
+      rgba(0, 0, 0, 0.9) 42%,
+      transparent 88%);
+}
+
+.grid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle,
+      rgba(255, 255, 255, 0.10) 0,
+      transparent 65%);
+  animation: pulseGrid 10s ease-in-out infinite;
+}
+
+/* DNA watermark */
+.watermark {
+  position: absolute;
+  left: 50%;
+  bottom: 12%;
+  transform: translateX(-50%) rotate(-6deg);
+  font-family: var(--font-display);
+  font-size: clamp(9rem, 15vw, 18rem);
+  font-weight: 900;
+  letter-spacing: -0.08em;
+  color: rgba(37, 99, 235, 0.030);
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* Floating particles */
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 0 18px rgba(37, 99, 235, 0.15),
+    0 0 40px rgba(6, 182, 212, 0.10);
+  animation: particleFloat 14s ease-in-out infinite;
+}
+
+/* Scientific network connections */
+.network {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.04;
+}
+
+.netLine {
+  stroke: rgba(37, 99, 235, 0.4);
+  stroke-width: 1;
+  stroke-dasharray: 4 8;
+  animation: dashMove 20s linear infinite;
+}
+
+/* ============================================= */
+/* Keyframes */
+/* ============================================= */
+
+@keyframes particleFloat {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0.2;
+  }
+  25% {
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-22px) scale(1.5);
+    opacity: 0.8;
+  }
+  75% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.2;
+  }
+}
+
+@keyframes blobFloat {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(40px, -35px) scale(1.08);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes pulseGrid {
+  0%, 100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes dashMove {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+

@@ -1,0 +1,86 @@
+/* =============================================
+   Gradient Button — Premium CTA
+   ============================================= */
+
+.primary,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 0 26px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s ease,
+    background 0.3s ease,
+    border-color 0.3s ease;
+}
+
+/* Primary — Gradient Blue */
+.primary {
+  color: white;
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #06b6d4 100%);
+  background-size: 150% 100%;
+  background-position: 0% 50%;
+  box-shadow:
+    0 8px 24px rgba(37, 99, 235, 0.25),
+    0 2px 4px rgba(37, 99, 235, 0.15);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.primary:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 14px 34px rgba(37, 99, 235, 0.30),
+    0 4px 8px rgba(37, 99, 235, 0.15);
+  background-position: 100% 50%;
+}
+
+.primary:active {
+  transform: translateY(0);
+  box-shadow:
+    0 4px 16px rgba(37, 99, 235, 0.20);
+}
+
+/* Secondary — Ghost/Outline */
+.secondary {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(148, 163, 184, 0.25);
+  backdrop-filter: blur(8px);
+}
+
+.secondary:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(37, 99, 235, 0.20);
+  box-shadow:
+    0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+.secondary:active {
+  transform: translateY(0);
+}
+
+/* =============================================
+   Responsive
+   ============================================= */
+
+@media (max-width: 768px) {
+  .primary,
+  .secondary {
+    min-height: 50px;
+    padding: 0 20px;
+    font-size: 0.9rem;
+    border-radius: 14px;
+  }
+}
+
