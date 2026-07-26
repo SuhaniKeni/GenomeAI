@@ -1,13 +1,17 @@
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 try:
-    from .api.routes import router
+    from backend.api.routes import router
 except ImportError:
-    from api.routes import router
+    try:
+        from .api.routes import router
+    except ImportError:
+        from api.routes import router
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 FRONTEND_DIR = BASE_DIR / "frontend"
@@ -19,6 +23,15 @@ app = FastAPI(
     version="1.0.0",
     description="DNA Disease Prediction Backend"
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 
 @app.get("/")

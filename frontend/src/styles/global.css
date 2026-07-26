@@ -2,57 +2,66 @@
   --font-display: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-body: 'Inter', system-ui, sans-serif;
 
-  /* Premium Color Palette */
-  --primary: #2563eb;
-  --primary-light: #3b82f6;
-  --primary-dark: #1d4ed8;
-  --secondary: #06b6d4;
-  --secondary-light: #14b8a6;
-  --accent: #7c3aed;
-  --success: #22c55e;
+  /* GenomeAI Clinical Design System — Official Palette */
+  --genome-blue: #3A6FD8;
+  --genome-blue-hover: #2E5FC2;
+  --helix-teal: #4DA8A3;
+  --sequence-green: #67A96B;
+  --analysis-amber: #D8A248;
+  --clinical-red: #C96A6A;
 
-  /* Neutrals */
-  --ink: #0f172a;
-  --ink-light: #1e293b;
-  --muted: #64748b;
-  --muted-light: #94a3b8;
-  --border: #e5e7eb;
-  --border-light: rgba(226, 232, 240, 0.6);
-  --bg-light: #f8fafc;
-  --white: #ffffff;
+  /* Background Colors */
+  --bg-main: #F4F7F9;
+  --bg-sidebar: #F8FAFB;
+  --bg-card: #FFFFFF;
+  --bg-secondary: #FCFDFD;
+  --bg-input: #FFFFFF;
+  --bg-sidebar-active: #E8F1FF;
+  --bg-sidebar-hover: #EEF5FA;
 
-  /* Spacing System */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 12px;
-  --space-lg: 16px;
-  --space-xl: 24px;
-  --space-2xl: 32px;
-  --space-3xl: 48px;
-  --space-4xl: 56px;
-  --space-5xl: 64px;
+  /* Text Colors */
+  --text-heading: #223145;
+  --text-body: #46566B;
+  --text-secondary: #718096;
+  --text-disabled: #A0AEC0;
 
-  /* Section Spacing (per spec) */
-  --nav-to-hero: 32px;
-  --hero-to-features: 56px;
-  --features-to-stats: 48px;
-  --stats-to-footer: 64px;
+  /* DNA Nucleotide Specific Colors */
+  --dna-a: #4DA8A3;
+  --dna-t: #D8A248;
+  --dna-g: #67A96B;
+  --dna-c: #3A6FD8;
+  --dna-n: #A0AEC0;
 
-  /* Layout */
-  --container-width: 1280px;
-  --navbar-height: 76px;
-  --section-padding: 64px;
-  --hero-top: 32px;
-  --hero-bottom: 56px;
-  --hero-gap: 64px;
-  --card-gap: 24px;
-  --radius-xl: 24px;
-  --radius-lg: 20px;
-  --radius-nav: 22px;
-  --shadow-soft: 0 10px 40px rgba(15, 23, 42, 0.08);
-  --shadow-hover: 0 18px 50px rgba(37, 99, 235, 0.16);
-  --shadow-nav: 0 8px 32px rgba(15, 23, 42, 0.08);
-  --shadow-card-hover: 0 24px 50px rgba(15, 23, 42, 0.12);
+  /* Status Badges */
+  --badge-ready-bg: #E8F8EF;
+  --badge-ready-text: #4F9D69;
+  --badge-running-bg: #EEF6FF;
+  --badge-running-text: #3A6FD8;
+  --badge-warning-bg: #FFF7E6;
+  --badge-warning-text: #D8A248;
+  --badge-error-bg: #FDEDED;
+  --badge-error-text: #C96A6A;
+
+  /* Chart Colors */
+  --chart-blue: #3A6FD8;
+  --chart-teal: #4DA8A3;
+  --chart-green: #67A96B;
+  --chart-amber: #D8A248;
+  --chart-slate: #7B8DBD;
+  --chart-gray: #B5C0CD;
+
+  /* Borders & Radii */
+  --border-color: #E2E8F0;
+  --radius-card: 18px;
+  --radius-button: 12px;
+  --radius-input: 10px;
+
+  /* Elevation Shadows */
+  --shadow-soft: 0 4px 12px rgba(35, 49, 69, 0.06);
+  --shadow-hover: 0 6px 16px rgba(35, 49, 69, 0.09);
+
+  /* Layout Variables */
+  --sidebar-width: 250px;
 }
 
 * {
@@ -66,19 +75,18 @@ html {
 body {
   margin: 0;
   font-family: var(--font-body);
-  color: var(--ink);
-  background:
-    radial-gradient(circle at top left, #dbeafe 0%, transparent 32%),
-    radial-gradient(circle at bottom right, #e0f2fe 0%, transparent 28%),
-    linear-gradient(180deg, #f8fbff 0%, #f9fcff 40%, #ffffff 100%);
+  color: var(--text-body);
+  background: var(--bg-main);
   overflow-x: hidden;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
 a,
 button,
 input,
-textarea {
+textarea,
+select {
   font: inherit;
 }
 
@@ -88,12 +96,8 @@ img {
 }
 
 ::selection {
-  background: #bfdbfe;
-  color: #0f172a;
-}
-
-section {
-  position: relative;
+  background: #Dbeafe;
+  color: var(--text-heading);
 }
 
 button {
@@ -103,15 +107,4 @@ button {
 a {
   text-decoration: none;
   color: inherit;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    radial-gradient(circle, rgba(37, 99, 235, 0.03) 1px, transparent 1px);
-  background-size: 36px 36px;
-  opacity: 0.4;
 }

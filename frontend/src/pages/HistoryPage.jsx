@@ -1,238 +1,184 @@
-import { useState, useEffect, useCallback } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
-import { Search, Trash2, XCircle, LoaderCircle, ChevronDown, Filter } from 'lucide-react';
-import PageLayout from '../components/PageLayout';
-import { fetchHistory, deleteHistoryRecord, clearAllHistory } from '../api/client';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import {
+  Search, Trash2, FileText, Clock, RefreshCw, AlertCircle, CheckCircle2, ShieldCheck
+} from 'lucide-react';
+
+import Sidebar from '../components/Sidebar.jsx';
+import { fetchHistory, deleteHistoryRecord, downloadPredictionReport } from '../api/client.js';
 import styles from './HistoryPage.module.css';
 
-const MODELS = ['All', 'CNN', 'LSTM', 'Transformer'];
-
-function formatDate(ts) {
-  if (!ts) return '-';
-  const d = new Date(ts);
-  if (isNaN(d.getTime())) return ts;
-  return d.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 export default function HistoryPage() {
-  const shouldReduceMotion = useReducedMotion();
-  const [records, setRecords] = useState([]);
+  const [historyItems, setHistoryItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
-  const [search, setSearch] = useState('');
-  const [modelFilter, setModelFilter] = useState('All');
-  const [offset, setOffset] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
-  const [deletingId, setDeletingId] = useState(null);
-  const [clearing, setClearing] = useState(false);
-  const limit = 25;
 
-  const loadHistory = useCallback(async (reset = false) => {
+  const loadHistory = async () => {
     setLoading(true);
     setError('');
     try {
-      const currentOffset = reset ? 0 : offset;
-      const params = { limit, offset: currentOffset };
-      if (search.trim()) params.search = search.trim();
-      if (modelFilter !== 'All') params.model = modelFilter;
-
-      const data = await fetchHistory(params);
-      const newRecords = data.records || [];
+      const data = await fetchHistory({ limit: 100, search: searchTerm });
+      setHistoryItems(data.items || []);
       setTotal(data.total || 0);
-
-      if (reset) {
-        setRecords(newRecords);
-        setOffset(limit);
-      } else {
-        setRecords((prev) => [...prev, ...newRecords]);
-        setOffset((prev) => prev + limit);
-      }
-      setHasMore(newRecords.length === limit);
-    } catch (err) {
-      setError(err?.response?.data?.detail?.message || 'Failed to load history.');
+    } catch {
+      setError('Could not load prediction history from database.');
     } finally {
       setLoading(false);
     }
-  }, [offset, search, modelFilter]);
+  };
 
   useEffect(() => {
-    setOffset(0);
-    loadHistory(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, modelFilter]);
-
-  const handleSearch = (e) => {
-    setSearch(e.target.value);
-  };
+    loadHistory();
+  }, [searchTerm]);
 
   const handleDelete = async (id) => {
-    setDeletingId(id);
+    if (!window.confirm(`Delete analysis record #${id}?`)) return;
     try {
       await deleteHistoryRecord(id);
-      setRecords((prev) => prev.filter((r) => r.id !== id));
+      setHistoryItems((prev) => prev.filter((item) => item.id !== id));
       setTotal((prev) => Math.max(0, prev - 1));
-    } catch (err) {
-      setError(err?.response?.data?.detail?.message || 'Failed to delete record.');
-    } finally {
-      setDeletingId(null);
+    } catch {
+      setError('Failed to delete history record.');
     }
   };
 
-  const handleClearAll = async () => {
-    setClearing(true);
+  const handleDownloadReport = async (item) => {
     try {
-      await clearAllHistory();
-      setRecords([]);
-      setTotal(0);
-      setHasMore(false);
-      setOffset(0);
-    } catch (err) {
-      setError(err?.response?.data?.detail?.message || 'Failed to clear history.');
-    } finally {
-      setClearing(false);
+      const blob = await downloadPredictionReport(item.sequence, {
+        model: 'cnn',
+        patientName: `Sample ID: SAM-${item.id}`,
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `GenomeAI_Report_ANL-${item.id}.pdf`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError('Could not generate PDF report for this record.');
     }
-  };
-
-  const fadeUp = {
-    initial: shouldReduceMotion ? {} : { opacity: 0, y: 18 },
-    whileInView: { opacity: 1, y: 0 },
-    viewport: { once: true },
   };
 
   return (
-    <PageLayout title="Prediction History" subtitle="Browse and manage all past predictions.">
-      <motion.section className={styles.toolbar} {...fadeUp}>
-        <div className={styles.searchWrap}>
-          <Search size={18} className={styles.searchIcon} />
-          <input
-            type="text"
-            placeholder="Search by disease or sequence…"
-            value={search}
-            onChange={handleSearch}
-            className={styles.searchInput}
-          />
+    <div className={styles.layout}>
+      <Sidebar />
+
+      <main className={styles.main}>
+
+        <div className={styles.headerRow}>
+          <div>
+            <span className={styles.kicker}>Laboratory Audit Log</span>
+            <h1>Analysis History Archive</h1>
+            <p>
+              Search, filter, and inspect past AI-supported genomic analysis records stored in the LIS database.
+            </p>
+          </div>
+          <div className={styles.totalBadge}>
+            <strong>{total}</strong> Records Archived
+          </div>
         </div>
 
-        <div className={styles.filterWrap}>
-          <Filter size={16} />
-          <select
-            value={modelFilter}
-            onChange={(e) => setModelFilter(e.target.value)}
-            className={styles.modelSelect}
-          >
-            {MODELS.map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
-        </div>
-
-        {records.length > 0 && (
-          <button
-            className={styles.clearBtn}
-            onClick={handleClearAll}
-            disabled={clearing}
-          >
-            {clearing ? <LoaderCircle size={16} className={styles.spin} /> : <XCircle size={16} />}
-            {clearing ? 'Clearing…' : 'Clear All'}
-          </button>
-        )}
-      </motion.section>
-
-      <motion.section className={styles.tablePanel} {...fadeUp}>
-        {error && <div className={styles.errorBox}>{error}</div>}
-
-        {loading && records.length === 0 ? (
-          <div className={styles.skeleton}>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className={styles.skeletonRow}>
-                <div className={styles.skelCell} style={{ width: '10%' }} />
-                <div className={styles.skelCell} style={{ width: '30%' }} />
-                <div className={styles.skelCell} style={{ width: '15%' }} />
-                <div className={styles.skelCell} style={{ width: '15%' }} />
-                <div className={styles.skelCell} style={{ width: '20%' }} />
-                <div className={styles.skelCell} style={{ width: '10%' }} />
-              </div>
-            ))}
+        <div className={styles.tableCard}>
+          <div className={styles.filterRow}>
+            <div className={styles.searchBox}>
+              <Search size={16} className={styles.searchIcon} />
+              <input
+                type="text"
+                placeholder="Search by disease or sequence..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <button type="button" className={styles.refreshBtn} onClick={loadHistory}>
+              <RefreshCw size={14} /> Refresh
+            </button>
           </div>
-        ) : records.length === 0 ? (
-          <div className={styles.emptyState}>
-            <Search size={40} strokeWidth={1.2} />
-            <h3>No predictions found</h3>
-            <p>Submit a DNA sequence on the Predict page to see your history here.</p>
-          </div>
-        ) : (
-          <>
-            <div className={styles.tableScroll}>
-              <table className={styles.table}>
-                <thead>
+
+          {error && (
+            <div className={styles.errorBox}>
+              <AlertCircle size={16} />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Analysis ID</th>
+                  <th>Sample Sequence Snippet</th>
+                  <th>Predicted Disease</th>
+                  <th>Confidence Score</th>
+                  <th>Date & Time</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
                   <tr>
-                    <th>ID</th>
-                    <th>Disease</th>
-                    <th>Confidence</th>
-                    <th>Model</th>
-                    <th>Date</th>
-                    <th />
+                    <td colSpan={7} className={styles.emptyCell}>
+                      Loading analysis records...
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {records.map((rec) => (
-                    <tr key={rec.id} className={styles.tableRow}>
-                      <td className={styles.cellId}>{rec.id}</td>
-                      <td className={styles.cellDisease}>{rec.predicted_disease || '-'}</td>
+                ) : historyItems.length > 0 ? (
+                  historyItems.map((item) => (
+                    <tr key={item.id}>
+                      <td className={styles.idCell}>
+                        <strong>ANL-{item.id}</strong>
+                      </td>
+                      <td className={styles.seqCell}>
+                        <code>{item.sequence ? item.sequence.slice(0, 30) + '...' : '201 bp'}</code>
+                      </td>
+                      <td className={styles.diseaseCell}>
+                        <strong>{item.predicted_disease}</strong>
+                      </td>
                       <td>
-                        <span className={styles.confBadge}>
-                          {rec.confidence != null ? `${rec.confidence}%` : '-'}
+                        <span className={styles.confBadge}>{item.confidence}%</span>
+                      </td>
+                      <td className={styles.dateCell}>{item.created_at || 'Recently'}</td>
+                      <td>
+                        <span className={styles.statusOk}>
+                          <CheckCircle2 size={12} /> Archived
                         </span>
                       </td>
-                      <td>{rec.model || '-'}</td>
-                      <td className={styles.cellDate}>{formatDate(rec.timestamp)}</td>
-                      <td>
-                        <button
-                          className={styles.deleteBtn}
-                          onClick={() => handleDelete(rec.id)}
-                          disabled={deletingId === rec.id}
-                          title="Delete record"
-                        >
-                          {deletingId === rec.id ? (
-                            <LoaderCircle size={14} className={styles.spin} />
-                          ) : (
+                      <td style={{ textAlign: 'right' }}>
+                        <div className={styles.actionGroup}>
+                          <button
+                            type="button"
+                            className={styles.pdfBtn}
+                            onClick={() => handleDownloadReport(item)}
+                            title="Download PDF Report"
+                          >
+                            <FileText size={14} /> PDF
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.delBtn}
+                            onClick={() => handleDelete(item.id)}
+                            title="Delete Record"
+                          >
                             <Trash2 size={14} />
-                          )}
-                        </button>
+                          </button>
+                        </div>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className={styles.tableFooter}>
-              <span className={styles.totalLabel}>{total} total records</span>
-              {hasMore && (
-                <button
-                  className={styles.loadMoreBtn}
-                  onClick={() => loadHistory(false)}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <LoaderCircle size={16} className={styles.spin} />
-                  ) : (
-                    <ChevronDown size={16} />
-                  )}
-                  {loading ? 'Loading…' : 'Load More'}
-                </button>
-              )}
-            </div>
-          </>
-        )}
-      </motion.section>
-    </PageLayout>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className={styles.emptyCell}>
+                      No analysis records found. Perform a sequence prediction to build history.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }

@@ -10,35 +10,13 @@ import { fetchHealth } from '../api/client';
 import styles from './Navbar.module.css';
 
 const navLinks = [
-  { label: 'Home', to: '/' },
-  { label: 'Predict DNA', to: '/predict' },
-  {
-    label: 'Analysis',
-    children: [
-      { label: 'DNA Visualizer', to: '/dna-visualizer', icon: DnaIcon },
-      { label: 'Mutation Analysis', to: '/mutation-analysis', icon: GitCompare },
-    ],
-  },
-  {
-    label: 'Dashboards',
-    children: [
-      { label: 'Model Comparison', to: '/model-dashboard', icon: BarChart3 },
-      { label: 'Research Dashboard', to: '/research-dashboard', icon: Database },
-      { label: 'Dataset Analytics', to: '/dataset-analytics', icon: Activity },
-      { label: 'Doctor Dashboard', to: '/doctor-dashboard', icon: Stethoscope },
-      { label: 'Admin Dashboard', to: '/admin', icon: Shield },
-    ],
-  },
-  {
-    label: 'Tools',
-    children: [
-      { label: 'Clinical Report', to: '/clinical-report', icon: FileText },
-      { label: 'Prediction History', to: '/history', icon: Clock },
-      { label: 'API Docs', to: '/api-docs', icon: BookOpen },
-      { label: 'Settings', to: '/settings', icon: Settings },
-    ],
-  },
+  { label: 'Dashboard', to: '/' },
+  { label: 'New Analysis', to: '/analysis' },
+  { label: 'Analysis History', to: '/history' },
+  { label: 'Laboratory Reports', to: '/reports' },
+  { label: 'About GenomeAI', to: '/about' },
 ];
+
 
 function NavDropdown({ item, isActive, isOpen, onToggle }) {
   const location = useLocation();
@@ -146,44 +124,40 @@ export default function Navbar() {
             </div>
             <div className={styles.brandText}>
               <span className={styles.brandName}>GenomeAI</span>
-              <span className={styles.brandSub}>AI-Powered Genomics</span>
+              <span className={styles.brandSub}>Clinical LIS Platform</span>
             </div>
           </Link>
         </div>
 
-        {/* Column 2: Navigation (exactly viewport-centered) */}
+        {/* Column 2: Navigation */}
         <div className={styles.navCol}>
           <div className={styles.navLinks}>
-            {navLinks.map((link) =>
-              link.children ? (
-                <NavDropdown
-                  key={link.label}
-                  item={link}
-                  isActive={isChildActive(link.children)}
-                  isOpen={openDropdown === link.label}
-                  onToggle={setOpenDropdown}
-                />
-              ) : (
-                <Link
-                  key={link.label}
-                  to={link.to}
-                  className={`${styles.navLink} ${isActive(link.to) ? styles.active : ''}`}
-                >
-                  {link.label}
-                </Link>
-              )
-            )}
+            {navLinks.map((link) => (
+              <Link
+                key={link.label}
+                to={link.to}
+                className={`${styles.navLink} ${isActive(link.to) ? styles.active : ''}`}
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
         </div>
 
-        {/* Column 3: Actions (right) */}
+        {/* Column 3: Actions */}
         <div className={styles.rightCol}>
           <div className={styles.apiStatus}>
             <span className={`${styles.statusDot} ${apiChecking ? styles.checking : apiOnline ? styles.online : styles.offline}`} />
             <span className={styles.statusLabel}>
-              {apiChecking ? 'Checking...' : apiOnline ? 'Online' : 'Offline'}
+              {apiChecking ? 'Engine Checking...' : apiOnline ? 'Engine Online' : 'Engine Offline'}
             </span>
           </div>
+
+          <Link to="/analysis" className={styles.actionBtn}>
+            <Dna size={16} />
+            <span>New Analysis</span>
+          </Link>
+
           <button
             className={styles.hamburger}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

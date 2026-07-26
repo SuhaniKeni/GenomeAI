@@ -13,6 +13,15 @@ const client = axios.create({
   },
 });
 
+client.interceptors.request.use((config) => {
+  const token = localStorage.getItem('genomeai_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+
 client.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -169,4 +178,62 @@ export async function fetchAdminStats() {
   return data;
 }
 
+// ============================================================
+// Auth & LIS Management API
+// ============================================================
+
+export async function loginUser(email, password) {
+  const { data } = await client.post('/auth/login', { email, password });
+  if (data.access_token) {
+    localStorage.setItem('genomeai_token', data.access_token);
+  }
+  return data;
+}
+
+export async function registerLaboratory(registerData) {
+  const { data } = await client.post('/auth/register-lab', registerData);
+  if (data.access_token) {
+    localStorage.setItem('genomeai_token', data.access_token);
+  }
+  return data;
+}
+
+export async function fetchCurrentUser() {
+  const { data } = await client.get('/auth/me');
+  return data;
+}
+
+export async function changePassword(oldPassword, newPassword) {
+  const { data } = await client.post('/auth/change-password', {
+    old_password: oldPassword,
+    new_password: newPassword,
+  });
+  return data;
+}
+
+export async function fetchLabUsers() {
+  const { data } = await client.get('/lis/users');
+  return data;
+}
+
+export async function createLabUser(userData) {
+  const { data } = await client.post('/lis/users', userData);
+  return data;
+}
+
+export async function deleteLabUser(userId) {
+  const { data } = await client.delete(`/lis/users/${userId}`);
+  return data;
+}
+
+export async function fetchLabDetails() {
+  const { data } = await client.get('/lis/lab');
+  return data;
+}
+
+export function logoutUser() {
+  localStorage.removeItem('genomeai_token');
+}
+
 export default client;
+

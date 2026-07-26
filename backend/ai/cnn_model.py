@@ -1,15 +1,20 @@
 import os
 from pathlib import Path
-
-from tensorflow.keras.models import Sequential
+import tensorflow as tf
+from tensorflow.keras.models import Model
 from tensorflow.keras.layers import (
+    Input,
     Embedding,
     Conv1D,
     BatchNormalization,
     MaxPooling1D,
     GlobalMaxPooling1D,
+    GlobalAveragePooling1D,
+    Concatenate,
     Dense,
     Dropout,
+    Add,
+    Activation,
 )
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.callbacks import (
@@ -17,6 +22,7 @@ from tensorflow.keras.callbacks import (
     ModelCheckpoint,
     ReduceLROnPlateau,
 )
+from tensorflow.keras.optimizers import Adam
 
 from data_loader import load_data
 from evaluate import evaluate_model
@@ -24,54 +30,77 @@ from metrics import save_training_plots
 from class_weights import get_class_weights
 
 BASE_DIR = Path(__file__).resolve().parents[2]
-
 os.makedirs(BASE_DIR / "trained_models", exist_ok=True)
 
 # ----------------------------------------------------
-# Load Dataset
+# 1. Load Dataset (Stratified 3-Way Split)
 # ----------------------------------------------------
-
-X_train, X_test, y_train, y_test = load_data()
+X_train, X_val, X_test, y_train, y_val, y_test = load_data(return_val=True)
 
 # Calculate class weights BEFORE one-hot encoding
 class_weights = get_class_weights(y_train)
 
 # One-hot encode labels
 y_train = to_categorical(y_train, num_classes=8)
+y_val = to_categorical(y_val, num_classes=8)
 y_test = to_categorical(y_test, num_classes=8)
 
 # ----------------------------------------------------
-# Build CNN Model
+# 2. Build Multi-Scale Residual 1D-CNN Model
 # ----------------------------------------------------
+inputs = Input(shape=(X_train.shape[1],), name="dna_input")
 
-model = Sequential([
-    Embedding(input_dim=5, output_dim=32),
+# Richer embedding representation (32 dimensions)
+x = Embedding(input_dim=5, output_dim=32, name="dna_embedding")(inputs)
 
-    Conv1D(64, 7, activation="relu", padding="same"),
-    BatchNormalization(),
-    MaxPooling1D(pool_size=2),
-    Dropout(0.25),
+# Block 1: Broad motif extraction (kernel=7)
+x = Conv1D(64, kernel_size=7, padding="same", kernel_initializer="he_normal")(x)
+x = BatchNormalization()(x)
+x = Activation("swish")(x)
+x = MaxPooling1D(pool_size=2)(x)
+x = Dropout(0.25)(x)
 
-    Conv1D(128, 5, activation="relu", padding="same"),
-    BatchNormalization(),
-    MaxPooling1D(pool_size=2),
-    Dropout(0.30),
+# Block 2: Medium motif extraction with Residual Connection (kernel=5)
+res_2 = Conv1D(128, kernel_size=1, padding="same")(x)
+x2 = Conv1D(128, kernel_size=5, padding="same", kernel_initializer="he_normal")(x)
+x2 = BatchNormalization()(x2)
+x2 = Activation("swish")(x2)
+x2 = Conv1D(128, kernel_size=5, padding="same", kernel_initializer="he_normal")(x2)
+x2 = BatchNormalization()(x2)
+x = Add()([res_2, x2])
+x = Activation("swish")(x)
+x = MaxPooling1D(pool_size=2)(x)
+x = Dropout(0.30)(x)
 
-    Conv1D(256, 3, activation="relu", padding="same"),
-    BatchNormalization(),
-    GlobalMaxPooling1D(),
-    Dropout(0.40),
+# Block 3: Fine-grained motif extraction (kernel=3)
+x = Conv1D(256, kernel_size=3, padding="same", kernel_initializer="he_normal")(x)
+x = BatchNormalization()(x)
+x = Activation("swish")(x)
 
-    Dense(128, activation="relu"),
-    BatchNormalization(),
-    Dropout(0.40),
-    Dense(8, activation="softmax")
-])
+# Dual Global Pooling: Max (peaks) + Avg (composition)
+g_max = GlobalMaxPooling1D()(x)
+g_avg = GlobalAveragePooling1D()(x)
+x = Concatenate()([g_max, g_avg])
 
-model.build(input_shape=(None, X_train.shape[1]))
+# Dense Classifier Head
+x = Dense(256, kernel_regularizer=tf.keras.regularizers.l2(1e-4), kernel_initializer="he_normal")(x)
+x = BatchNormalization()(x)
+x = Activation("swish")(x)
+x = Dropout(0.40)(x)
+
+x = Dense(128, kernel_regularizer=tf.keras.regularizers.l2(1e-4), kernel_initializer="he_normal")(x)
+x = BatchNormalization()(x)
+x = Activation("swish")(x)
+x = Dropout(0.30)(x)
+
+outputs = Dense(8, activation="softmax", name="disease_prediction")(x)
+
+model = Model(inputs=inputs, outputs=outputs, name="GenomeAI_Optimized_1DCNN")
+
+optimizer = Adam(learning_rate=1e-3, clipnorm=1.0)
 
 model.compile(
-    optimizer="adam",
+    optimizer=optimizer,
     loss="categorical_crossentropy",
     metrics=["accuracy"]
 )
@@ -79,38 +108,40 @@ model.compile(
 model.summary()
 
 # ----------------------------------------------------
-# Callbacks
+# 3. Callbacks
 # ----------------------------------------------------
-
 early_stopping = EarlyStopping(
-    monitor="val_loss",
+    monitor="val_accuracy",
     patience=8,
-    restore_best_weights=True
+    restore_best_weights=True,
+    verbose=1
 )
 
+best_model_path = BASE_DIR / "trained_models" / "best_cnn_model.keras"
 model_checkpoint = ModelCheckpoint(
-    BASE_DIR / "trained_models" / "best_cnn_model.keras",
+    best_model_path,
     monitor="val_accuracy",
-    save_best_only=True
+    save_best_only=True,
+    verbose=1
 )
 
 reduce_lr = ReduceLROnPlateau(
     monitor="val_loss",
     factor=0.5,
-    patience=2,
+    patience=3,
+    min_lr=1e-6,
     verbose=1
 )
 
 # ----------------------------------------------------
-# Train Model
+# 4. Train Model
 # ----------------------------------------------------
-
 history = model.fit(
     X_train,
     y_train,
-    validation_split=0.2,
-    epochs=50,
-    batch_size=64,
+    validation_data=(X_val, y_val),
+    epochs=40,
+    batch_size=128,
     class_weight=class_weights,
     callbacks=[
         early_stopping,
@@ -120,21 +151,15 @@ history = model.fit(
 )
 
 # ----------------------------------------------------
-# Save Training Graphs
+# 5. Save Training Plots & Evaluate
 # ----------------------------------------------------
-
 save_training_plots(history, "CNN")
 
-# ----------------------------------------------------
-# Evaluate Model
-# ----------------------------------------------------
-
+print("\nEvaluating Best Model on Holdout Test Set...")
 evaluate_model(model, X_test, y_test)
 
-# ----------------------------------------------------
-# Save Model
-# ----------------------------------------------------
+# Save final copy to cnn_model.keras
+final_model_path = BASE_DIR / "trained_models" / "cnn_model.keras"
+model.save(final_model_path)
+print(f"\nOptimized CNN model saved to {best_model_path} and {final_model_path}")
 
-model.save(BASE_DIR / "trained_models" / "cnn_model.keras")
-
-print("\nCNN model saved successfully!")

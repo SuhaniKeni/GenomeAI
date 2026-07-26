@@ -3,9 +3,15 @@ try:
     from backend.utils.disease_mapper import get_disease
     from backend.utils.tokenizer import prepare_model_input
 except ImportError:
-    from predictor.cnn_predictor import predict
-    from utils.disease_mapper import get_disease
-    from utils.tokenizer import prepare_model_input
+    try:
+        from .cnn_predictor import predict
+        from ..utils.disease_mapper import get_disease
+        from ..utils.tokenizer import prepare_model_input
+    except ImportError:
+        from predictor.cnn_predictor import predict
+        from utils.disease_mapper import get_disease
+        from utils.tokenizer import prepare_model_input
+
 
 def confidence_level(confidence):
 

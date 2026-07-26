@@ -22,7 +22,10 @@ def get_model():
 
 def predict(tokens: np.ndarray):
 
-    probabilities = get_model().predict(tokens, verbose=0)[0]
+    model = get_model()
+    output = model(tokens, training=False)
+    probabilities = output.numpy()[0] if hasattr(output, "numpy") else np.array(output)[0]
+
 
     predicted_label = int(np.argmax(probabilities))
 

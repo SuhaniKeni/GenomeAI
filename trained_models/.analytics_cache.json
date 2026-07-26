@@ -1,0 +1,103 @@
+{
+  "dataset_size": 68527,
+  "disease_classes": 8,
+  "training_samples": 54821,
+  "testing_samples": 13706,
+  "class_distribution": {
+    "Breast Cancer": {
+      "label": 0,
+      "count": 29711,
+      "percentage": 43.36
+    },
+    "Lung Cancer": {
+      "label": 1,
+      "count": 3375,
+      "percentage": 4.93
+    },
+    "Alzheimer's Disease": {
+      "label": 2,
+      "count": 1063,
+      "percentage": 1.55
+    },
+    "Parkinson's Disease": {
+      "label": 3,
+      "count": 1521,
+      "percentage": 2.22
+    },
+    "Leukemia": {
+      "label": 4,
+      "count": 2234,
+      "percentage": 3.26
+    },
+    "Type 2 Diabetes": {
+      "label": 5,
+      "count": 2555,
+      "percentage": 3.73
+    },
+    "Ovarian Cancer": {
+      "label": 6,
+      "count": 27513,
+      "percentage": 40.15
+    },
+    "Colorectal Cancer": {
+      "label": 7,
+      "count": 555,
+      "percentage": 0.81
+    }
+  },
+  "sequence_length": {
+    "histogram": {
+      "201": 68527
+    },
+    "stats": {
+      "min": 201,
+      "max": 201,
+      "mean": 201.0,
+      "median": 201.0,
+      "std": 0.0
+    }
+  },
+  "gc_content": {
+    "mean": 40.66,
+    "std": 10.03,
+    "min": 14.43,
+    "max": 84.08,
+    "distribution": {
+      "0.25": 34.33,
+      "0.5": 37.81,
+      "0.75": 44.28
+    }
+  },
+  "nucleotide_frequency": {
+    "A": {
+      "count": 4140990,
+      "percentage": 30.06
+    },
+    "T": {
+      "count": 4032904,
+      "percentage": 29.28
+    },
+    "G": {
+      "count": 2802300,
+      "percentage": 20.34
+    },
+    "C": {
+      "count": 2797733,
+      "percentage": 20.31
+    },
+    "N": {
+      "count": 0,
+      "percentage": 0.0
+    }
+  },
+  "mutation_frequency": {
+    "Colorectal Cancer": 555,
+    "Breast Cancer": 29711,
+    "Parkinson's Disease": 1521,
+    "Ovarian Cancer": 27513,
+    "Type 2 Diabetes": 2555,
+    "Alzheimer's Disease": 1063,
+    "Lung Cancer": 3375,
+    "Leukemia": 2234
+  }
+}

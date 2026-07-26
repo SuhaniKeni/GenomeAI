@@ -1,334 +1,283 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  BookOpen,
-  Server,
-  Activity,
-  FileText,
-  BarChart3,
-  PieChart,
-  Clock,
-  Shield,
-  ExternalLink,
-  Code
+  Dna, ShieldCheck, Cpu, Database, Sparkles, Activity, FileText, Clock,
+  Users, ChevronDown, ChevronUp, Layers, CheckCircle2, AlertTriangle,
+  Building2, GraduationCap, Microscope, BookOpen, BarChart2
 } from 'lucide-react';
-import PageLayout from '../components/PageLayout';
+
+import Sidebar from '../components/Sidebar.jsx';
 import styles from './ApiDocs.module.css';
 
-const API_SECTIONS = [
-  {
-    id: 'health',
-    title: 'Health API',
-    icon: Activity,
-    method: 'GET',
-    methodStyle: 'methodGet',
-    endpoint: '/api/health',
-    description: 'Check the server health status. Returns a simple response indicating the server is running and available.',
-    sampleRequest: `fetch('/api/health')`,
-    sampleResponse: `{
-  "status": "ok",
-  "timestamp": "2025-01-15T10:30:00Z",
-  "version": "1.0.0"
-}`
-  },
-  {
-    id: 'prediction',
-    title: 'Prediction API',
-    icon: Server,
-    method: 'POST',
-    methodStyle: 'methodPost',
-    endpoint: '/api/predict',
-    description: 'Submit a genomic sequence for disease prediction. Accepts a DNA sequence string and optional model selection. Returns the predicted disease, confidence score, SHAP explanation, mutation analysis, and AI insights.',
-    sampleRequest: `fetch('/api/predict', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    sequence: "ATGCGATCGTAGCTAG...",
-    model: "transformer",
-    patient_name: "John Doe"
-  })
-})`,
-    sampleResponse: `{
-  "success": true,
-  "result": {
-    "predicted_disease": "Cardiomyopathy",
-    "confidence": 0.973,
-    "confidence_level": "High",
-    "model": "transformer",
-    "all_predictions": {
-      "Cardiomyopathy": 0.973,
-      "Healthy": 0.018,
-      "Diabetes": 0.009
-    },
-    "inference_time_ms": 145.3,
-    "shap_explanation": [
-      { "position": 42, "base": "G", "importance": 0.23 },
-      { "position": 87, "base": "T", "importance": -0.18 }
-    ],
-    "mutation_analysis": {
-      "mutations_detected": 3,
-      "pathogenic_mutations": 2,
-      "details": [
-        { "position": 156, "ref": "G", "alt": "A", "impact": "Missense" }
-      ]
-    },
-    "ai_insights": "High-confidence prediction..."
-  }
-}`
-  },
-  {
-    id: 'report',
-    title: 'Report API',
-    icon: FileText,
-    method: 'POST',
-    methodStyle: 'methodPost',
-    endpoint: '/api/report/download',
-    description: 'Generate and download a structured PDF report for a given prediction result. Requires a sequence and optional patient details.',
-    sampleRequest: `fetch('/api/report/download', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    sequence: "ATGCGATCGTAGCTAG...",
-    model: "lstm",
-    patient_name: "Jane Smith"
-  })
-})`,
-    sampleResponse: `[Binary PDF data]
-Content-Type: application/pdf
-Content-Disposition: attachment; filename="genome_report.pdf"
-
-The response is a downloadable PDF file containing:
-- Patient and sample metadata
-- Predicted disease & confidence
-- SHAP-based explanation plot
-- Mutation analysis results
-- AI-generated clinical insights
-- Model performance disclaimer`
-  },
-  {
-    id: 'benchmark',
-    title: 'Benchmark API',
-    icon: BarChart3,
-    method: 'GET',
-    methodStyle: 'methodGet',
-    endpoint: '/api/benchmark',
-    description: 'Retrieve benchmark performance metrics for all available models (CNN, LSTM, Transformer). Includes accuracy, precision, recall, F1 score, inference time, and ROC curve data.',
-    sampleRequest: `fetch('/api/benchmark')`,
-    sampleResponse: `{
-  "success": true,
-  "results": {
-    "CNN": {
-      "accuracy": 0.952,
-      "precision": 0.947,
-      "recall": 0.951,
-      "f1_score": 0.949,
-      "inference_time": 12.4,
-      "roc_curve": [
-        { "threshold": 0.0, "fpr": 0.0, "tpr": 0.0 },
-        { "threshold": 0.1, "fpr": 0.02, "tpr": 0.85 }
-      ]
-    },
-    "LSTM": {
-      "accuracy": 0.968,
-      "precision": 0.963,
-      "recall": 0.967,
-      "f1_score": 0.965,
-      "inference_time": 28.7,
-      "roc_curve": [ ... ]
-    },
-    "Transformer": {
-      "accuracy": 0.981,
-      "precision": 0.978,
-      "recall": 0.98,
-      "f1_score": 0.979,
-      "inference_time": 56.2,
-      "roc_curve": [ ... ]
-    }
-  }
-}`
-  },
-  {
-    id: 'analytics',
-    title: 'Analytics API',
-    icon: PieChart,
-    method: 'GET',
-    methodStyle: 'methodGet',
-    endpoint: '/api/analytics',
-    description: 'Fetch dataset analytics including dataset size, number of disease classes, training/testing sample counts, class distribution, sequence length statistics, GC content, nucleotide frequencies, and mutation frequency per disease.',
-    sampleRequest: `fetch('/api/analytics')`,
-    sampleResponse: `{
-  "success": true,
-  "analytics": {
-    "dataset_size": 125000,
-    "disease_classes": 8,
-    "training_samples": 100000,
-    "testing_samples": 25000,
-    "class_distribution": {
-      "Healthy": 25000,
-      "Cardiomyopathy": 18000,
-      "Diabetes": 16000
-    },
-    "sequence_length": {
-      "min": 50,
-      "max": 500,
-      "mean": 250.4,
-      "median": 245
-    },
-    "gc_content": {
-      "mean": 42.3,
-      "min": 28.1,
-      "max": 65.7
-    },
-    "nucleotide_frequency": {
-      "A": 0.28,
-      "T": 0.27,
-      "G": 0.22,
-      "C": 0.21,
-      "N": 0.02
-    },
-    "mutation_frequency": {
-      "Cardiomyopathy": 0.043,
-      "Diabetes": 0.031,
-      "Healthy": 0.008
-    }
-  }
-}`
-  },
-  {
-    id: 'history',
-    title: 'History API',
-    icon: Clock,
-    method: 'GET',
-    methodStyle: 'methodGet',
-    endpoint: '/api/history',
-    description: 'Retrieve paginated prediction history. Supports search, filtering by model and disease, and pagination via limit and offset parameters.',
-    sampleRequest: `fetch('/api/history?limit=10&offset=0&search=cardio&model=transformer&disease=Cardiomyopathy')`,
-    sampleResponse: `{
-  "total": 1250,
-  "records": [
-    {
-      "id": "pred_001",
-      "timestamp": "2025-01-15T10:30:00Z",
-      "predicted_disease": "Cardiomyopathy",
-      "confidence": 0.973,
-      "model": "transformer",
-      "sequence_preview": "ATGCGATCGT... (42 bp)"
-    }
-  ]
-}`
-  },
-  {
-    id: 'admin',
-    title: 'Admin API',
-    icon: Shield,
-    method: 'GET',
-    methodStyle: 'methodGet',
-    endpoint: '/api/admin/stats',
-    description: 'Access administrative statistics about the system. Returns total predictions, average confidence, most predicted disease, model usage breakdown, and daily prediction counts.',
-    sampleRequest: `fetch('/api/admin/stats')`,
-    sampleResponse: `{
-  "success": true,
-  "stats": {
-    "total_predictions": 1250,
-    "average_confidence": 0.934,
-    "most_predicted_disease": "Cardiomyopathy",
-    "model_usage": {
-      "CNN": 350,
-      "LSTM": 500,
-      "Transformer": 400
-    },
-    "predictions_per_day": [
-      { "date": "2025-01-10", "count": 45 },
-      { "date": "2025-01-11", "count": 62 }
-    ]
-  }
-}`
-  }
+const SUPPORTED_DISEASES = [
+  { name: 'Breast Cancer', category: 'Oncology', desc: 'Genomic risk variants associated with BRCA motif alterations.' },
+  { name: 'Lung Cancer', category: 'Oncology', desc: 'Somatic & germline sequence patterns linked to pulmonary neoplasms.' },
+  { name: "Alzheimer's Disease", category: 'Neurology', desc: 'Neurodegenerative variant signatures within ApoE & amyloid pathways.' },
+  { name: "Parkinson's Disease", category: 'Neurology', desc: 'Dopaminergic genomic locus variant classifications.' },
+  { name: 'Leukemia', category: 'Hematology', desc: 'Hematologic malignancy variants in blood & marrow DNA.' },
+  { name: 'Type 2 Diabetes', category: 'Endocrinology', desc: 'Metabolic genomic locus susceptibility classification.' },
+  { name: 'Ovarian Cancer', category: 'Oncology', desc: 'Gynecologic oncology risk variant identification.' },
+  { name: 'Colorectal Cancer', category: 'Oncology', desc: 'Gastrointestinal genomic mutation sequence analysis.' },
 ];
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
-};
+const WORKFLOW_STEPS = [
+  { step: '01', title: 'DNA Sample', desc: 'Sequenced in lab' },
+  { step: '02', title: 'Sequence Validation', desc: '201-bp window check' },
+  { step: '03', title: 'CNN Analysis', desc: 'Pattern extraction' },
+  { step: '04', title: 'Disease Prediction', desc: 'Multi-class mapping' },
+  { step: '05', title: 'Confidence Score', desc: 'Probability rating' },
+  { step: '06', title: 'PDF Report', desc: 'Clinical export' },
+  { step: '07', title: 'Expert Review', desc: 'Medical interpretation' },
+];
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } }
-};
+const KEY_FEATURES = [
+  { icon: ShieldCheck, title: 'DNA Validation', desc: 'Automated 201-bp window checking, GC content computation, and base count auditing.' },
+  { icon: Cpu, title: 'AI Disease Prediction', desc: 'Evaluates genomic sequences against 8 multi-class disease risk categories.' },
+  { icon: BarChart2, title: 'Confidence Scoring', desc: 'Outputs exact percentage confidence ratings and ranked probability distributions.' },
+  { icon: FileText, title: 'PDF Report Export', desc: 'Generates vector-styled ReportLab laboratory reports for clinical record-keeping.' },
+  { icon: Clock, title: 'Analysis History', desc: 'Searchable audit trail stored in SQLite/PostgreSQL with multi-tenant lab scoping.' },
+  { icon: Users, title: 'User Management', desc: 'Role-Based Access Control (RBAC) for Admins, Lab Managers, Techs, and Researchers.' },
+];
 
 export default function ApiDocs() {
+  const [techOpen, setTechOpen] = useState(false);
+
   return (
-    <div className={styles.page}>
-      <div className={styles.main}>
-        <motion.div
-          className={styles.header}
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <div className={styles.kicker}>
-            <Code size={18} />
-            Developer Reference
+    <div className={styles.layout}>
+      <Sidebar />
+
+      <main className={styles.main}>
+        {/* 1. Hero Section */}
+        <section className={styles.heroCard}>
+          <div className={styles.heroBadge}>
+            <Sparkles size={14} />
+            <span>Commercial LIS Platform Overview</span>
           </div>
-          <h1>API Documentation</h1>
-          <p>
-            Complete reference for the Genome AI REST API. All endpoints return JSON
-            responses unless otherwise noted.
+          <h1>GenomeAI: AI-Assisted DNA Disease Analysis Platform</h1>
+          <p className={styles.tagline}>
+            "Analyze DNA with AI. Generate professional laboratory reports."
           </p>
-        </motion.div>
+          <p className={styles.heroSub}>
+            GenomeAI is a high-performance Laboratory Information System (LIS) that empowers molecular biology laboratories, geneticists, and research institutions to accelerate DNA sequence interpretation with validated deep learning algorithms.
+          </p>
+        </section>
 
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-60px' }}
-        >
-          {API_SECTIONS.map(section => {
-            const Icon = section.icon;
-            return (
-              <motion.div key={section.id} className={styles.panel} variants={itemVariants}>
-                <div className={styles.panelHeader}>
-                  <div className={styles.panelIcon}>
-                    <Icon size={22} />
+        {/* 2. What is GenomeAI? */}
+        <section className={styles.section}>
+          <div className={styles.secHead}>
+            <Dna className={styles.iconBlue} size={20} />
+            <h2>What is GenomeAI?</h2>
+          </div>
+          <div className={styles.grid2}>
+            <div className={styles.textCard}>
+              <p>
+                Modern genomic sequencing generates vast nucleotide datasets. Traditional analysis relies on manual variant lookup, which is time-consuming and often overlooks contextual motif interactions across non-coding regions.
+              </p>
+              <p>
+                <strong>GenomeAI</strong> acts as an intelligent decision-support copilot for laboratory technicians and bioinformaticians. By analyzing raw 201-bp DNA sequence windows, GenomeAI calculates disease probability distributions across 8 major health conditions in milliseconds.
+              </p>
+            </div>
+            <div className={styles.textCardHighlight}>
+              <ShieldCheck className={styles.iconTeal} size={24} />
+              <div>
+                <strong>Built for Modern Laboratories</strong>
+                <p>
+                  GenomeAI streamlines laboratory operations from sample receipt to report distribution while maintaining strict multi-tenant data privacy and clinical audit trails.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 3. Visual Workflow */}
+        <section className={styles.section}>
+          <div className={styles.secHead}>
+            <Activity className={styles.iconBlue} size={20} />
+            <h2>Laboratory Workflow Pipeline</h2>
+          </div>
+          <div className={styles.workflowTrack}>
+            {WORKFLOW_STEPS.map((s, idx) => (
+              <div key={s.step} className={styles.workflowStep}>
+                <div className={styles.stepNum}>{s.step}</div>
+                <strong>{s.title}</strong>
+                <span>{s.desc}</span>
+                {idx < WORKFLOW_STEPS.length - 1 && <div className={styles.arrow} />}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 4. Key Features */}
+        <section className={styles.section}>
+          <div className={styles.secHead}>
+            <Sparkles className={styles.iconBlue} size={20} />
+            <h2>Core Platform Features</h2>
+          </div>
+          <div className={styles.featuresGrid}>
+            {KEY_FEATURES.map((feat) => {
+              const Icon = feat.icon;
+              return (
+                <div key={feat.title} className={styles.featureCard}>
+                  <div className={styles.featIconWrap}>
+                    <Icon size={20} />
                   </div>
-                  <h2>{section.title}</h2>
-                  <span className={`${styles.methodBadge} ${styles[section.methodStyle]}`}>
-                    {section.method}
-                  </span>
+                  <h3>{feat.title}</h3>
+                  <p>{feat.desc}</p>
                 </div>
+              );
+            })}
+          </div>
+        </section>
 
-                <div className={styles.endpoint}>
-                  <span className={styles.endpointUrl}>{section.endpoint}</span>
-                </div>
+        {/* 5. Supported Diseases */}
+        <section className={styles.section}>
+          <div className={styles.secHead}>
+            <Database className={styles.iconBlue} size={20} />
+            <h2>Supported Disease Categories</h2>
+          </div>
+          <div className={styles.diseaseGrid}>
+            {SUPPORTED_DISEASES.map((dis) => (
+              <div key={dis.name} className={styles.diseaseCard}>
+                <span className={styles.categoryTag}>{dis.category}</span>
+                <h4>{dis.name}</h4>
+                <p>{dis.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
 
-                <p className={styles.desc}>{section.description}</p>
+        {/* 6. AI Analysis Engine */}
+        <section className={styles.section}>
+          <div className={styles.secHead}>
+            <Cpu className={styles.iconBlue} size={20} />
+            <h2>The GenomeAI CNN Engine</h2>
+          </div>
+          <div className={styles.engineCard}>
+            <p className={styles.engineSimple}>
+              GenomeAI processes DNA similarly to how computer vision systems identify patterns in digital images. Instead of reading individual letters independently, the 1D Convolutional Neural Network scans nucleotide windows to detect complex motif structures, GC density clusters, and mutation signatures associated with disease risks.
+            </p>
 
-                <div className={styles.sectionTitle}>Sample Request</div>
-                <div className={styles.codeBlock}>
-                  <code>{section.sampleRequest}</code>
-                </div>
+            <button
+              type="button"
+              className={styles.collapseToggle}
+              onClick={() => setTechOpen(!techOpen)}
+            >
+              <span>Technical Architecture & Training Parameters</span>
+              {techOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
 
-                <div className={styles.sectionTitle}>Sample Response</div>
-                <div className={styles.codeBlock}>
-                  <code>{section.sampleResponse}</code>
-                </div>
+            {techOpen && (
+              <motion.div
+                className={styles.techDetailsBox}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                transition={{ duration: 0.3 }}
+              >
+                <ul>
+                  <li><strong>Embedding Layer:</strong> Nucleotide tokens (A, T, G, C, N) mapped to 32-dimensional dense vector space.</li>
+                  <li><strong>Multi-Scale Convolutions:</strong> Parallel 1D convolutional layers with kernel sizes 7, 5, and 3 to capture multi-scale motifs.</li>
+                  <li><strong>Activations & Regularization:</strong> Swish non-linear activations with Batch Normalization and 0.3 Dropout.</li>
+                  <li><strong>Dual Pooling Strategy:</strong> Combines GlobalMaxPooling1D and GlobalAveragePooling1D for localized spike and composition feature retention.</li>
+                  <li><strong>Optimization:</strong> Adam optimizer trained on Categorical Crossentropy loss.</li>
+                </ul>
               </motion.div>
-            );
-          })}
-        </motion.div>
+            )}
+          </div>
+        </section>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          style={{ textAlign: 'center', marginTop: 24 }}
-        >
-          <a href="/docs" className={styles.swaggerLink}>
-            <ExternalLink size={20} />
-            View Interactive Swagger Documentation
-          </a>
-        </motion.div>
-      </div>
+        {/* 7. Platform Statistics */}
+        <section className={styles.section}>
+          <div className={styles.secHead}>
+            <BarChart2 className={styles.iconBlue} size={20} />
+            <h2>Validated Engine Performance</h2>
+          </div>
+          <div className={styles.statsGrid}>
+            <div className={styles.statCard}>
+              <div className={styles.statVal}>68,527</div>
+              <div className={styles.statLabel}>ClinVar Variant Targets</div>
+            </div>
+            <div className={styles.statCard}>
+              <div className={styles.statVal}>8</div>
+              <div className={styles.statLabel}>Disease Categories</div>
+            </div>
+            <div className={styles.statCard}>
+              <div className={styles.statVal}>65.46%</div>
+              <div className={styles.statLabel}>Measured Validation Accuracy</div>
+            </div>
+            <div className={styles.statCard}>
+              <div className={styles.statVal}>v2.0</div>
+              <div className={styles.statLabel}>GenomeAI CNN Model</div>
+            </div>
+          </div>
+        </section>
+
+        {/* 8. Technology Stack */}
+        <section className={styles.section}>
+          <div className={styles.secHead}>
+            <Layers className={styles.iconBlue} size={20} />
+            <h2>Enterprise Technology Stack</h2>
+          </div>
+          <div className={styles.techStackGrid}>
+            <div className={styles.stackCard}>
+              <strong>Frontend</strong>
+              <span>React 19, Tailwind CSS, Lucide Icons, Recharts, Framer Motion</span>
+            </div>
+            <div className={styles.stackCard}>
+              <strong>Backend REST API</strong>
+              <span>FastAPI, Python 3.12, Uvicorn, ReportLab PDF Engine</span>
+            </div>
+            <div className={styles.stackCard}>
+              <strong>AI & Deep Learning</strong>
+              <span>TensorFlow, Keras 1D-CNN, PyTorch, SHAP Explainability</span>
+            </div>
+            <div className={styles.stackCard}>
+              <strong>Database & Security</strong>
+              <span>SQLAlchemy 2.0 ORM, SQLite / PostgreSQL, JWT Bearer Tokens</span>
+            </div>
+          </div>
+        </section>
+
+        {/* 9. Intended Users */}
+        <section className={styles.section}>
+          <div className={styles.secHead}>
+            <Users className={styles.iconBlue} size={20} />
+            <h2>Target Audience</h2>
+          </div>
+          <div className={styles.usersGrid}>
+            <div className={styles.userCard}>
+              <Microscope size={22} className={styles.iconBlue} />
+              <h4>Molecular Biology Labs</h4>
+              <p>Accelerate variant classification during high-throughput sequencing runs.</p>
+            </div>
+            <div className={styles.userCard}>
+              <Building2 size={22} className={styles.iconTeal} />
+              <h4>Genetic Research Centers</h4>
+              <p>Audit multi-class risk probabilities across large cohort datasets.</p>
+            </div>
+            <div className={styles.userCard}>
+              <GraduationCap size={22} className={styles.iconNavy} />
+              <h4>Universities & Institutes</h4>
+              <p>Train students on AI-assisted bioinformatics decision-support workflows.</p>
+            </div>
+            <div className={styles.userCard}>
+              <BookOpen size={22} className={styles.iconGreen} />
+              <h4>Biotechnology Students</h4>
+              <p>Gain hands-on experience with modern LIS software and AI disease modeling.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* 10. Important Notice */}
+        <section className={styles.disclaimerCard}>
+          <AlertTriangle className={styles.iconWarn} size={24} />
+          <div>
+            <h3>Regulatory & Clinical Decision Support Notice</h3>
+            <p>
+              GenomeAI is an AI-assisted decision-support software designed to assist laboratory personnel and bioinformatics researchers. It is <strong>NOT</strong> an autonomous medical diagnostic device. Predictions generated by GenomeAI must always be evaluated alongside laboratory findings, patient history, and expert clinical judgment by qualified healthcare professionals.
+            </p>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

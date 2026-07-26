@@ -126,17 +126,26 @@ def compare_to_consensus(
     If no consensus is provided, the reference is inferred as the most common
     nucleotide across the dataset (defaulting to 'N' for unknown positions).
     """
+    if observed_tokens is None or observed_tokens.ndim != 2 or observed_tokens.shape[0] == 0:
+        raise ValueError("Invalid observed_tokens: Expected 2D array of shape (1, sequence_length).")
+
     seq_len = observed_tokens.shape[1]
 
     if consensus_tokens is None:
-        # Default consensus: middle position is the mutated base
+        # Default consensus: reference template sequence
         consensus_tokens = observed_tokens.copy()
         consensus_tokens[0, :] = TOKEN_MAP["N"]
+
+    if consensus_tokens.shape[1] != seq_len:
+        raise ValueError(
+            f"Token length mismatch: consensus ({consensus_tokens.shape[1]}) != observed ({seq_len})."
+        )
 
     obs_str = "".join(_token_to_base(int(observed_tokens[0, i])) for i in range(seq_len))
     con_str = "".join(_token_to_base(int(consensus_tokens[0, i])) for i in range(seq_len))
 
     return detect_mutations(con_str, obs_str, genome_start)
+
 
 
 def get_mutation_summary_text(mutation_result: dict, disease_name: str) -> str:

@@ -1,0 +1,125 @@
+============================================================
+Summary
+============================================================
+Rows                               : 68527
+Columns                            : 11
+Unique Alleles                     : 45969
+Unique Genes                       : 30
+Unique Diseases                    : 8
+
+
+============================================================
+Missing Values
+============================================================
+
+
+============================================================
+Duplicates
+============================================================
+Duplicate AlleleID                 : 22558
+Duplicate ReferenceSequence        : 35809
+Duplicate MutatedSequence          : 22558
+
+
+============================================================
+Disease Distribution
+============================================================
+Breast Cancer                      : 29711
+Ovarian Cancer                     : 27513
+Lung Cancer                        : 3375
+Type 2 Diabetes                    : 2555
+Leukemia                           : 2234
+Parkinson's Disease                : 1521
+Alzheimer's Disease                : 1063
+Colorectal Cancer                  : 555
+
+
+============================================================
+Clinical Significance
+============================================================
+Uncertain significance             : 18806
+Conflicting classifications of pathogenicity: 17851
+Likely benign                      : 15298
+Pathogenic                         : 4381
+-                                  : 4073
+Benign                             : 3190
+Benign/Likely benign               : 2456
+Likely pathogenic                  : 1182
+Pathogenic/Likely pathogenic       : 1110
+not provided                       : 115
+Uncertain significance/Uncertain risk allele: 25
+Likely risk allele                 : 9
+Likely pathogenic/Likely risk allele: 7
+drug response                      : 5
+Uncertain risk allele              : 3
+Pathogenic/Likely pathogenic/Likely risk allele: 2
+Conflicting classifications of pathogenicity; risk factor: 2
+Likely pathogenic; drug response   : 2
+Pathogenic/Likely pathogenic; risk factor: 1
+Conflicting classifications of pathogenicity; association; risk factor: 1
+Pathogenic/Likely pathogenic/Likely pathogenic, low penetrance: 1
+risk factor                        : 1
+Pathogenic; drug response          : 1
+Pathogenic/Likely pathogenic/Pathogenic, low penetrance: 1
+Conflicting classifications of pathogenicity; other; risk factor: 1
+Uncertain significance; drug response: 1
+association not found              : 1
+VUS-low                            : 1
+
+
+============================================================
+Gene Statistics
+============================================================
+BRCA2                              : 25206
+BRCA1                              : 19910
+PALB2                              : 4318
+BRIP1                              : 4196
+EGFR                               : 3071
+CHEK2                              : 2835
+GATA2                              : 1322
+LRRK2                              : 984
+CEBPA                              : 875
+ABCC8                              : 839
+GCK                                : 809
+RAD51C                             : 759
+HNF1A                              : 612
+APP                                : 409
+PSEN1                              : 402
+PINK1                              : 326
+KCNJ11                             : 295
+TP53                               : 259
+PSEN2                              : 238
+MSH6                               : 211
+
+
+============================================================
+Sequences
+============================================================
+Invalid Reference Sequences        : 0
+Invalid Mutated Sequences          : 0
+Reference Length Min               : 201
+Reference Length Max               : 201
+Mutated Length Min                 : 201
+Mutated Length Max                 : 201
+
+
+============================================================
+Mutation Validation
+============================================================
+No-change mutations                : 27
+Invalid Positions                  : 0
+
+
+============================================================
+Class Imbalance
+============================================================
+Largest Class                      : 29711
+Smallest Class                     : 555
+Imbalance Ratio                    : 53.53
+
+
+============================================================
+Dataset Quality Score
+============================================================
+70
+

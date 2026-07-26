@@ -46,14 +46,18 @@ def load_resources():
         trust_remote_code=True,
     )
 
-    if MODEL_PATH.exists():
-        _MODEL.load_state_dict(
-            torch.load(MODEL_PATH, map_location=device, weights_only=True),
-            strict=False,
+    if not MODEL_PATH.exists():
+        raise FileNotFoundError(
+            f"Fine-tuned Transformer model weights not found at {MODEL_PATH}. "
+            "Please train the Transformer model using backend/ai/transformer_train.py first."
         )
-        print(f"Transformer: loaded fine-tuned weights from {MODEL_PATH}")
-    else:
-        print("Transformer: no fine-tuned weights found — using pre-trained base.")
+
+    _MODEL.load_state_dict(
+        torch.load(MODEL_PATH, map_location=device, weights_only=True),
+        strict=False,
+    )
+    print(f"Transformer: loaded fine-tuned weights from {MODEL_PATH}")
+
 
     _MODEL.to(device)
     _MODEL.eval()

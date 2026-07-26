@@ -36,8 +36,10 @@ def predict(tokens: np.ndarray) -> dict:
     model = get_model()
 
     start = time.perf_counter()
-    probabilities = model.predict(tokens, verbose=0)[0]
+    output = model(tokens, training=False)
+    probabilities = output.numpy()[0] if hasattr(output, "numpy") else np.array(output)[0]
     elapsed_ms = round((time.perf_counter() - start) * 1000, 2)
+
 
     predicted_label = int(np.argmax(probabilities))
     confidence = float(np.max(probabilities))

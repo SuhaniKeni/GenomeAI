@@ -42,18 +42,25 @@ def _predict_proba_transformer(tokens_batch: np.ndarray) -> np.ndarray:
     from backend.predictor.transformer_predictor import load_resources, _tokens_to_string
     model, tokenizer = load_resources()
     import torch
+
     device = next(model.parameters()).device
-    probs_list = []
-    for i in range(len(tokens_batch)):
-        dna_str = _tokens_to_string(tokens_batch[i])
-        inputs = tokenizer(dna_str, return_tensors="pt", truncation=True,
-                           padding="max_length", max_length=256)
-        inputs = {k: v.to(device) for k, v in inputs.items()}
-        with torch.no_grad():
-            logits = model(**inputs).logits
-        probs = torch.softmax(logits, dim=-1).cpu().numpy()[0]
-        probs_list.append(probs)
-    return np.array(probs_list)
+    dna_strings = [_tokens_to_string(tokens_batch[i]) for i in range(len(tokens_batch))]
+
+    inputs = tokenizer(
+        dna_strings,
+        return_tensors="pt",
+        truncation=True,
+        padding="max_length",
+        max_length=256,
+    )
+    inputs = {k: v.to(device) for k, v in inputs.items()}
+
+    with torch.no_grad():
+        logits = model(**inputs).logits
+
+    probs = torch.softmax(logits, dim=-1).cpu().numpy()
+    return probs
+
 
 
 def compute_shap_values(
@@ -89,21 +96,22 @@ def compute_shap_values(
     importances = np.zeros(seq_len, dtype=np.float64)
     rng = np.random.default_rng(42)
 
-    for _ in range(num_perturbations):
-        # Create random mask
-        mask = rng.random(seq_len) > 0.5
-        masked = base_seq.copy()
-        masked[0, mask] = baseline
+    # Vectorized perturbation matrix generation
+    masks = rng.random((num_perturbations, seq_len)) > 0.5
+    batch_seq = np.tile(base_seq, (num_perturbations, 1))
+    for i in range(num_perturbations):
+        batch_seq[i, masks[i]] = baseline
 
-        masked_probs = _predict_proba_tc(masked, model_type)
-        delta = original_probs[0, predicted_class] - masked_probs[0, predicted_class]
+    batch_probs = _predict_proba_tc(batch_seq, model_type)
+    deltas = original_probs[0, predicted_class] - batch_probs[:, predicted_class]
 
-        # Credit delta to masked positions equally
-        n_masked = int(mask.sum())
+    for i in range(num_perturbations):
+        n_masked = int(masks[i].sum())
         if n_masked > 0:
-            importances[mask] += delta / n_masked
+            importances[masks[i]] += deltas[i] / n_masked
 
     importances /= num_perturbations
+
 
     # Convert to absolute values for importance ranking
     abs_importances = np.abs(importances)
