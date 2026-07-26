@@ -1,15 +1,17 @@
+import sys
 from pathlib import Path
 
 import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 INPUT = PROJECT_ROOT / "datasets" / "processed" / "ai_training_dataset.csv"
 OUTPUT = PROJECT_ROOT / "datasets" / "processed" / "ai_training_tokenized.csv"
 
-try:
-    from backend.utils.tokenizer import TOKEN_MAP
-except ImportError:
-    from utils.tokenizer import TOKEN_MAP
+from backend.utils.tokenizer import TOKEN_MAP
+
 
 df = pd.read_csv(INPUT)
 

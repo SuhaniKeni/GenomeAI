@@ -1,6 +1,16 @@
 import os
+import sys
 from pathlib import Path
+import numpy as np
 import tensorflow as tf
+
+
+BASE_DIR = Path(__file__).resolve().parents[2]
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import (
     Input,
@@ -29,7 +39,6 @@ from evaluate import evaluate_model
 from metrics import save_training_plots
 from class_weights import get_class_weights
 
-BASE_DIR = Path(__file__).resolve().parents[2]
 os.makedirs(BASE_DIR / "trained_models", exist_ok=True)
 
 # ----------------------------------------------------
@@ -40,10 +49,13 @@ X_train, X_val, X_test, y_train, y_val, y_test = load_data(return_val=True)
 # Calculate class weights BEFORE one-hot encoding
 class_weights = get_class_weights(y_train)
 
+# Calculate num_classes dynamically
+num_classes = len(np.unique(np.concatenate([y_train, y_val, y_test])))
+
 # One-hot encode labels
-y_train = to_categorical(y_train, num_classes=8)
-y_val = to_categorical(y_val, num_classes=8)
-y_test = to_categorical(y_test, num_classes=8)
+y_train = to_categorical(y_train, num_classes=num_classes)
+y_val = to_categorical(y_val, num_classes=num_classes)
+y_test = to_categorical(y_test, num_classes=num_classes)
 
 # ----------------------------------------------------
 # 2. Build Multi-Scale Residual 1D-CNN Model
@@ -93,7 +105,8 @@ x = BatchNormalization()(x)
 x = Activation("swish")(x)
 x = Dropout(0.30)(x)
 
-outputs = Dense(8, activation="softmax", name="disease_prediction")(x)
+outputs = Dense(num_classes, activation="softmax", name="disease_prediction")(x)
+
 
 model = Model(inputs=inputs, outputs=outputs, name="GenomeAI_Optimized_1DCNN")
 

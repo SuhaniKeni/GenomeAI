@@ -5,6 +5,8 @@ import {
 import styles from './ProbabilityChart.module.css';
 
 const ALL_DISEASES = [
+  'Healthy',
+  'Hereditary Breast & Ovarian Cancer',
   'Breast Cancer',
   'Lung Cancer',
   "Alzheimer's Disease",
@@ -14,6 +16,8 @@ const ALL_DISEASES = [
   'Ovarian Cancer',
   'Colorectal Cancer',
 ];
+
+
 
 const CHART_PALETTE = ['#3A6FD8', '#4DA8A3', '#67A96B', '#D8A248', '#7B8DBD', '#B5C0CD'];
 

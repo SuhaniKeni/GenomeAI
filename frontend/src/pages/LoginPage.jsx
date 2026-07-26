@@ -1,20 +1,20 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Dna, ShieldCheck, Lock, Mail, ArrowRight, AlertCircle, Building2 } from 'lucide-react';
+import { Dna, Lock, Mail, ArrowRight, AlertCircle } from 'lucide-react';
 import { loginUser } from '../api/client';
 import styles from './AuthPage.module.css';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('admin@genomeai.lab');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!email || !password) {
-      setError('Please fill in your laboratory email and password.');
+      setError('Please enter your laboratory credentials.');
       return;
     }
 
@@ -25,23 +25,8 @@ export default function LoginPage() {
       await loginUser(email, password);
       navigate('/');
     } catch (err) {
-      const msg = err?.response?.data?.detail?.message || 'Login failed. Please check your credentials.';
+      const msg = err?.response?.data?.detail?.message || 'Authentication failed. Please check credentials.';
       setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleQuickDemo = async (demoEmail, demoPass) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-    setLoading(true);
-    setError('');
-    try {
-      await loginUser(demoEmail, demoPass);
-      navigate('/');
-    } catch {
-      setError('Demo login failed.');
     } finally {
       setLoading(false);
     }
@@ -50,19 +35,21 @@ export default function LoginPage() {
   return (
     <div className={styles.authContainer}>
       <div className={styles.authCard}>
+        {/* Brand Header */}
         <div className={styles.brandHeader}>
           <div className={styles.logoWrap}>
-            <Dna size={28} />
+            <Dna size={24} />
           </div>
           <h2>GenomeAI LIS Portal</h2>
           <span className={styles.subText}>Clinical Genomic Decision Support System</span>
         </div>
 
+        {/* Login Form */}
         <form onSubmit={handleLogin} className={styles.form}>
           <div className={styles.formGroup}>
             <label>Laboratory Email Address</label>
             <div className={styles.inputWrap}>
-              <Mail size={16} className={styles.icon} />
+              <Mail size={15} className={styles.icon} />
               <input
                 type="email"
                 value={email}
@@ -76,12 +63,19 @@ export default function LoginPage() {
           <div className={styles.formGroup}>
             <div className={styles.passHeader}>
               <label>Password</label>
-              <a href="#forgot" className={styles.forgotLink} onClick={() => alert('Please contact your LIS Laboratory Administrator to reset your password.')}>
+              <a
+                href="#forgot"
+                className={styles.forgotLink}
+                onClick={(e) => {
+                  e.preventDefault();
+                  alert('Please contact your LIS Laboratory Administrator to reset your password.');
+                }}
+              >
                 Forgot Password?
               </a>
             </div>
             <div className={styles.inputWrap}>
-              <Lock size={16} className={styles.icon} />
+              <Lock size={15} className={styles.icon} />
               <input
                 type="password"
                 value={password}
@@ -94,7 +88,7 @@ export default function LoginPage() {
 
           {error && (
             <div className={styles.errorBox}>
-              <AlertCircle size={16} />
+              <AlertCircle size={15} />
               <span>{error}</span>
             </div>
           )}
@@ -105,23 +99,9 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className={styles.demoBox}>
-          <span>Quick Demo Roles:</span>
-          <div className={styles.demoChips}>
-            <button type="button" onClick={() => handleQuickDemo('admin@genomeai.lab', 'admin123')}>
-              Administrator
-            </button>
-            <button type="button" onClick={() => handleQuickDemo('tech@genomeai.lab', 'tech123')}>
-              Technician
-            </button>
-            <button type="button" onClick={() => handleQuickDemo('manager@genomeai.lab', 'manager123')}>
-              Lab Manager
-            </button>
-          </div>
-        </div>
-
+        {/* Registration Section */}
         <div className={styles.footerLink}>
-          <span>Need to register a new laboratory?</span>
+          <span>Need to register a laboratory?</span>
           <Link to="/register-lab">Create Laboratory Profile</Link>
         </div>
       </div>

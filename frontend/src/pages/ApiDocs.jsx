@@ -10,15 +10,19 @@ import Sidebar from '../components/Sidebar.jsx';
 import styles from './ApiDocs.module.css';
 
 const SUPPORTED_DISEASES = [
-  { name: 'Breast Cancer', category: 'Oncology', desc: 'Genomic risk variants associated with BRCA motif alterations.' },
-  { name: 'Lung Cancer', category: 'Oncology', desc: 'Somatic & germline sequence patterns linked to pulmonary neoplasms.' },
-  { name: "Alzheimer's Disease", category: 'Neurology', desc: 'Neurodegenerative variant signatures within ApoE & amyloid pathways.' },
-  { name: "Parkinson's Disease", category: 'Neurology', desc: 'Dopaminergic genomic locus variant classifications.' },
-  { name: 'Leukemia', category: 'Hematology', desc: 'Hematologic malignancy variants in blood & marrow DNA.' },
-  { name: 'Type 2 Diabetes', category: 'Endocrinology', desc: 'Metabolic genomic locus susceptibility classification.' },
-  { name: 'Ovarian Cancer', category: 'Oncology', desc: 'Gynecologic oncology risk variant identification.' },
-  { name: 'Colorectal Cancer', category: 'Oncology', desc: 'Gastrointestinal genomic mutation sequence analysis.' },
+  { name: 'Healthy / Benign Sequence', category: 'Baseline', desc: 'Benign & likely benign non-pathogenic genomic variants.' },
+  { name: 'Hereditary Breast & Ovarian Cancer (HBOC)', category: 'Oncology', desc: 'Pathogenic BRCA1 & BRCA2 genomic risk variants.' },
+  { name: 'Breast Cancer', category: 'Oncology', desc: 'Genomic risk variants associated with PALB2 & CHEK2 alterations.' },
+  { name: 'Lung Cancer', category: 'Oncology', desc: 'Somatic & germline sequence patterns linked to EGFR, KRAS, & ALK.' },
+  { name: "Alzheimer's Disease", category: 'Neurology', desc: 'Neurodegenerative variant signatures within ApoE & APP pathways.' },
+  { name: "Parkinson's Disease", category: 'Neurology', desc: 'Dopaminergic LRRK2 & PINK1 genomic locus variant classifications.' },
+  { name: 'Leukemia', category: 'Hematology', desc: 'Hematologic malignancy variants in CEBPA & FLT3 DNA.' },
+  { name: 'Type 2 Diabetes', category: 'Endocrinology', desc: 'Metabolic genomic locus susceptibility classification (ABCC8/GCK).' },
+  { name: 'Ovarian Cancer', category: 'Oncology', desc: 'Gynecologic oncology risk variants (RAD51C/BRIP1).' },
+  { name: 'Colorectal Cancer', category: 'Oncology', desc: 'Gastrointestinal genomic mutation sequence analysis (APC/MSH).' },
 ];
+
+
 
 const WORKFLOW_STEPS = [
   { step: '01', title: 'DNA Sample', desc: 'Sequenced in lab' },

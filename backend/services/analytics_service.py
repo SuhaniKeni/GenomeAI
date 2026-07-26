@@ -18,15 +18,19 @@ TOKENISED_PATH = BASE_DIR / "datasets" / "processed" / "ai_training_tokenized.cs
 ANALYTICS_CACHE = BASE_DIR / "trained_models" / ".analytics_cache.json"
 
 DISEASE_LABELS = {
-    0: "Breast Cancer",
-    1: "Lung Cancer",
-    2: "Alzheimer's Disease",
-    3: "Parkinson's Disease",
-    4: "Leukemia",
-    5: "Type 2 Diabetes",
-    6: "Ovarian Cancer",
-    7: "Colorectal Cancer",
+    0: "Healthy",
+    1: "Hereditary Breast & Ovarian Cancer",
+    2: "Breast Cancer",
+    3: "Lung Cancer",
+    4: "Alzheimer's Disease",
+    5: "Parkinson's Disease",
+    6: "Leukemia",
+    7: "Type 2 Diabetes",
+    8: "Ovarian Cancer",
+    9: "Colorectal Cancer",
 }
+
+
 
 
 def _safe_literal_eval(val):

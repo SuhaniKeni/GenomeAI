@@ -63,7 +63,9 @@ def load_data(clinical_significance_filter=None, return_val=False):
         clinical_significance_filter = env_filter
 
     df = pd.read_csv(INPUT)
-    df = _filter_by_clinical_significance(df, clinical_significance_filter)
+    if clinical_significance_filter:
+        df = _filter_by_clinical_significance(df, clinical_significance_filter)
+
 
     # Convert string representation back to Python lists.
     mutated = np.array(df["MutatedTokens"].apply(ast.literal_eval).tolist(), dtype=np.int32)
