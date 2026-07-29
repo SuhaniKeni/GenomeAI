@@ -26,7 +26,7 @@ def test_tokenize_sequence_rejects_invalid_characters():
 
 
 def test_prepare_model_input_rejects_wrong_length():
-    with pytest.raises(ValueError, match="exactly 201"):
+    with pytest.raises(ValueError, match="at least 201"):
         prepare_model_input("ATGCN")
 
 

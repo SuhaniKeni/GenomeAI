@@ -2,15 +2,17 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Upload, Sparkles, FileText, ShieldCheck, Dna, Activity,
-  Clock, CheckCircle2, AlertCircle, RefreshCw, User, Folder, FileSpreadsheet
+  Clock, CheckCircle2, AlertCircle, RefreshCw, User, Folder, FileSpreadsheet,
+  Database, BookOpen, Award
 } from 'lucide-react';
 
 import Sidebar from '../components/Sidebar.jsx';
 import DNAStatsWidget from '../components/DNAStatsWidget.jsx';
 import ProbabilityChart from '../components/ProbabilityChart.jsx';
 import AnalysisProgressModal from '../components/AnalysisProgressModal.jsx';
+import SupportingEvidenceSummary from '../components/Predict/SupportingEvidenceSummary.jsx';
 
-import { predictSequence, downloadPredictionReport, fetchHealth } from '../api/client.js';
+import { predictSequence, downloadPredictionReport, fetchHealth, runBlastSearch, fetchModelMetrics } from '../api/client.js';
 import styles from './PredictPage.module.css';
 
 
@@ -31,6 +33,17 @@ export default function PredictPage() {
   const [projectName, setProjectName] = useState('Oncology Genomic Screening Study');
   const [operatorName, setOperatorName] = useState('Lab Technician');
   const [notes, setNotes] = useState('');
+  const [modelMetrics, setModelMetrics] = useState(null);
+
+  useEffect(() => {
+    fetchModelMetrics()
+      .then((res) => {
+        if (res && res.available !== false && res.accuracy) {
+          setModelMetrics(res);
+        }
+      })
+      .catch(() => setModelMetrics(null));
+  }, []);
 
   // DNA Input & Engine State
   const [sequence, setSequence] = useState('');
@@ -41,6 +54,33 @@ export default function PredictPage() {
 
   // Analysis Result State
   const [result, setResult] = useState(null);
+  const [isRetryingBlast, setIsRetryingBlast] = useState(false);
+
+  const handleRetryBlast = async () => {
+    if (!sequence) return;
+    setIsRetryingBlast(true);
+    try {
+      const data = await runBlastSearch(normalizeSequence(sequence));
+      setResult((prev) => (prev ? { ...prev, blast: data.blast } : prev));
+    } catch (err) {
+      const msg = err?.response?.data?.detail?.message || 'NCBI Remote BLAST retry failed.';
+      setResult((prev) =>
+        prev
+          ? {
+              ...prev,
+              blast: {
+                status: 'failed',
+                error: msg,
+                query_length: normalizeSequence(sequence).length,
+                top_hit: null,
+              },
+            }
+          : prev
+      );
+    } finally {
+      setIsRetryingBlast(false);
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -284,13 +324,13 @@ export default function PredictPage() {
                   <span className={styles.verBadge}>v2.0 Validated</span>
                 </div>
                 <p className={styles.engineDesc}>
-                  Multi-scale 1D Convolutional Neural Network trained on 68,527 ClinVar variant targets.
+                  Multi-scale 1D Convolutional Neural Network trained on genomic variant targets.
                 </p>
                 <div className={styles.specList}>
                   <div><span>Window:</span> <strong>201 bp</strong></div>
-                  <div><span>Accuracy:</span> <strong>65.46% (Verified)</strong></div>
-                  <div><span>Macro F1:</span> <strong>87.0%</strong></div>
-                  <div><span>Latency:</span> <strong>~12 ms</strong></div>
+                  <div><span>Accuracy:</span> <strong>{modelMetrics ? `${modelMetrics.accuracy}% (Verified)` : 'Not Available'}</strong></div>
+                  <div><span>Macro F1:</span> <strong>{modelMetrics ? `${modelMetrics.macro_f1}%` : 'N/A'}</strong></div>
+                  <div><span>Latency:</span> <strong>{modelMetrics ? `~${modelMetrics.inference_time_ms} ms` : '~9.5 ms'}</strong></div>
                 </div>
               </div>
 
@@ -363,6 +403,120 @@ export default function PredictPage() {
                 topDisease={result.predicted_disease}
               />
             </div>
+
+            {/* Supporting Evidence Summary Card */}
+            <SupportingEvidenceSummary
+              blastData={result.blast}
+              predictionResult={result}
+              sequence={normalizedSeq}
+              isLoading={isRetryingBlast}
+            />
+
+            {/* Genomic Evidence Layer */}
+            {result.evidence && (
+              <div className={styles.evidenceCard}>
+                <div className={styles.evidenceHeader}>
+                  <div className={styles.evidenceTitleGroup}>
+                    <h3>Genomic Evidence & Biological Interpretation</h3>
+                    <p className={styles.secSub}>
+                      Hybrid biological evidence combining local GenomeAI knowledge base, NCBI ClinVar, and NCBI Gene annotations.
+                    </p>
+                  </div>
+                  <div className={styles.scorePillGroup}>
+                    <span className={`${styles.scorePill} ${
+                      result.evidence.evidence_score === 'Very Strong' ? styles.scoreVeryStrong :
+                      result.evidence.evidence_score === 'Strong' ? styles.scoreStrong :
+                      result.evidence.evidence_score === 'Moderate' ? styles.scoreModerate :
+                      result.evidence.evidence_score === 'Limited' ? styles.scoreLimited :
+                      styles.scoreNone
+                    }`}>
+                      <Award size={16} />
+                      Evidence Score: {result.evidence.evidence_score}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Verification Badges */}
+                <div className={styles.badgeRow}>
+                  {result.evidence.verified_badges?.local_genomeai && (
+                    <span className={styles.badgeVerified}>
+                      <CheckCircle2 size={14} />
+                      ✓ Local GenomeAI Evidence
+                    </span>
+                  )}
+                  {result.evidence.verified_badges?.clinvar && (
+                    <span className={styles.badgeClinvar}>
+                      <CheckCircle2 size={14} />
+                      ✓ ClinVar Verified
+                    </span>
+                  )}
+                  {result.evidence.verified_badges?.ncbi && (
+                    <span className={styles.badgeNcbi}>
+                      <CheckCircle2 size={14} />
+                      ✓ NCBI Verified
+                    </span>
+                  )}
+                  {result.evidence.verified_badges?.local_genomeai &&
+                   !result.evidence.verified_badges?.clinvar &&
+                   !result.evidence.verified_badges?.ncbi && (
+                    <span className={styles.badgeOffline}>
+                      Verified using GenomeAI Local Knowledge Base
+                    </span>
+                  )}
+                </div>
+
+                {/* Metadata Grid */}
+                <div className={styles.evidenceGrid}>
+                  <div className={styles.evidenceGridItem}>
+                    <span>Target Gene</span>
+                    <strong>{result.evidence.gene} ({result.evidence.chromosome})</strong>
+                  </div>
+                  <div className={styles.evidenceGridItem}>
+                    <span>Gene Coordinates</span>
+                    <strong>{result.evidence.gene_coordinates}</strong>
+                  </div>
+                  <div className={styles.evidenceGridItem}>
+                    <span>Variant Signature</span>
+                    <strong>{result.evidence.variant}</strong>
+                  </div>
+                  <div className={styles.evidenceGridItem}>
+                    <span>Clinical Significance</span>
+                    <strong>{result.evidence.clinical_significance}</strong>
+                  </div>
+                  <div className={styles.evidenceGridItem}>
+                    <span>Review Status</span>
+                    <strong>{result.evidence.review_status}</strong>
+                  </div>
+                </div>
+
+                {/* Evidence Details Cards */}
+                <div className={styles.evidenceDetailGrid}>
+                  {result.evidence.ncbi_evidence && (
+                    <div className={styles.evidenceDetailCard}>
+                      <h4><BookOpen size={16} /> NCBI Gene Annotation</h4>
+                      <p><strong>Full Name:</strong> {result.evidence.ncbi_evidence.gene_name}</p>
+                      <p><strong>Cytogenetic:</strong> {result.evidence.ncbi_evidence.cytogenetic_location}</p>
+                      <p style={{ marginTop: '6px' }}>{result.evidence.ncbi_evidence.gene_summary}</p>
+                    </div>
+                  )}
+
+                  {result.evidence.clinvar_evidence && (
+                    <div className={styles.evidenceDetailCard}>
+                      <h4><Database size={16} /> ClinVar Record</h4>
+                      <p><strong>Accession:</strong> {result.evidence.clinvar_evidence.clinvar_accession}</p>
+                      <p><strong>Submissions:</strong> {result.evidence.clinvar_evidence.supporting_submissions} supporting submitter(s)</p>
+                      <p><strong>Consequence:</strong> {result.evidence.clinvar_evidence.molecular_consequence}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Evidence Narrative Summary */}
+                <div className={styles.evidenceSummaryBox}>
+                  <strong>Evidence Interpretation Summary:</strong>
+                  <p style={{ margin: '4px 0 0 0' }}>{result.evidence.evidence_summary}</p>
+                </div>
+              </div>
+            )}
 
             <div className={styles.regulatoryBox}>
               <ShieldCheck size={18} />

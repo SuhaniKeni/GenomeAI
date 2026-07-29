@@ -1,20 +1,25 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Search, Trash2, FileText, Clock, RefreshCw, AlertCircle, CheckCircle2, ShieldCheck
+  Search, Trash2, FileText, Clock, RefreshCw, AlertCircle, CheckCircle2, ShieldCheck, Eye, Dna, FileCheck
 } from 'lucide-react';
 
 import Sidebar from '../components/Sidebar.jsx';
+import HistoryDetailsModal from '../components/History/HistoryDetailsModal.jsx';
 import { fetchHistory, deleteHistoryRecord, downloadPredictionReport } from '../api/client.js';
 import styles from './HistoryPage.module.css';
 
 
 export default function HistoryPage() {
+  const navigate = useNavigate();
   const [historyItems, setHistoryItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
+  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const loadHistory = async () => {
     setLoading(true);
@@ -60,6 +65,11 @@ export default function HistoryPage() {
     } catch {
       setError('Could not generate PDF report for this record.');
     }
+  };
+
+  const handleInspectRecord = (item) => {
+    setSelectedRecord(item);
+    setIsModalOpen(true);
   };
 
   return (
@@ -109,9 +119,10 @@ export default function HistoryPage() {
               <thead>
                 <tr>
                   <th>Analysis ID</th>
-                  <th>Sample Sequence Snippet</th>
+                  <th>Sequence Snippet</th>
                   <th>Predicted Disease</th>
-                  <th>Confidence Score</th>
+                  <th>Confidence</th>
+                  <th>Supporting Evidence Match</th>
                   <th>Date & Time</th>
                   <th>Status</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
@@ -120,7 +131,7 @@ export default function HistoryPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className={styles.emptyCell}>
+                    <td colSpan={8} className={styles.emptyCell}>
                       Loading analysis records...
                     </td>
                   </tr>
@@ -131,13 +142,23 @@ export default function HistoryPage() {
                         <strong>ANL-{item.id}</strong>
                       </td>
                       <td className={styles.seqCell}>
-                        <code>{item.sequence ? item.sequence.slice(0, 30) + '...' : '201 bp'}</code>
+                        <code>{item.sequence ? item.sequence.slice(0, 24) + '...' : '201 bp'}</code>
                       </td>
                       <td className={styles.diseaseCell}>
                         <strong>{item.predicted_disease}</strong>
                       </td>
                       <td>
                         <span className={styles.confBadge}>{item.confidence}%</span>
+                      </td>
+                      <td>
+                        {item.blast?.top_hit ? (
+                          <span style={{ color: '#38bdf8', fontWeight: 600, fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <Dna size={12} />
+                            {item.blast.top_hit.gene} ({item.blast.top_hit.identity}%)
+                          </span>
+                        ) : (
+                          <span style={{ color: '#64748b', fontSize: '0.8rem' }}>No Match</span>
+                        )}
                       </td>
                       <td className={styles.dateCell}>{item.created_at || 'Recently'}</td>
                       <td>
@@ -147,6 +168,31 @@ export default function HistoryPage() {
                       </td>
                       <td style={{ textAlign: 'right' }}>
                         <div className={styles.actionGroup}>
+                          <button
+                            type="button"
+                            className={styles.pdfBtn}
+                            onClick={() => handleInspectRecord(item)}
+                            title="View Prediction Analysis"
+                          >
+                            <Eye size={14} /> View
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.pdfBtn}
+                            onClick={() => {
+                              navigate('/evidence', {
+                                state: {
+                                  predictionResult: item,
+                                  blastData: item.blast,
+                                  sequence: item.sequence,
+                                  timestamp: item.timestamp,
+                                }
+                              });
+                            }}
+                            title="View Supporting Evidence"
+                          >
+                            <FileCheck size={14} /> Evidence
+                          </button>
                           <button
                             type="button"
                             className={styles.pdfBtn}
@@ -169,7 +215,7 @@ export default function HistoryPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className={styles.emptyCell}>
+                    <td colSpan={8} className={styles.emptyCell}>
                       No analysis records found. Perform a sequence prediction to build history.
                     </td>
                   </tr>
@@ -179,6 +225,13 @@ export default function HistoryPage() {
           </div>
         </div>
       </main>
+
+      <HistoryDetailsModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        record={selectedRecord}
+        onDownloadPDF={handleDownloadReport}
+      />
     </div>
   );
 }

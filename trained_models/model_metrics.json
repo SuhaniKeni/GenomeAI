@@ -1,0 +1,14 @@
+{
+  "model_name": "Multi-Scale Parallel SE-ResCNN",
+  "accuracy": 84.79,
+  "test_accuracy": 84.79,
+  "macro_f1": 76.32,
+  "weighted_f1": 83.26,
+  "balanced_accuracy": 78.11,
+  "training_loss": 0.111,
+  "inference_time_ms": 9.5,
+  "dataset_size": 19984,
+  "test_samples": 2998,
+  "trained_on": "2026-07-29 23:40",
+  "available": true
+}

@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import PredictPage from './pages/PredictPage';
 import ClinicalReportPage from './pages/ClinicalReportPage';
 import HistoryPage from './pages/HistoryPage';
+import EvidencePage from './pages/EvidencePage';
 import AdminDashboard from './pages/AdminDashboard';
 import ApiDocs from './pages/ApiDocs';
 import LoginPage from './pages/LoginPage';
@@ -18,6 +19,8 @@ export default function App() {
       <Route path="/analysis" element={<PredictPage />} />
       <Route path="/predict" element={<PredictPage />} />
       <Route path="/history" element={<HistoryPage />} />
+      <Route path="/evidence" element={<EvidencePage />} />
+      <Route path="/supporting-evidence" element={<EvidencePage />} />
       <Route path="/reports" element={<ClinicalReportPage />} />
       <Route path="/clinical-report" element={<ClinicalReportPage />} />
       <Route path="/users" element={<LabUsersPage />} />

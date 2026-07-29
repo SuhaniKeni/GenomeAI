@@ -87,6 +87,7 @@ def _init_db():
         """)
 
         # 5. Legacy History Table
+        # 5. Legacy History Table
         conn.execute("""
             CREATE TABLE IF NOT EXISTS history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -100,9 +101,15 @@ def _init_db():
                 sequence_length INTEGER NOT NULL,
                 inference_time_ms REAL,
                 shap_explanation TEXT,
-                mutation_summary TEXT
+                mutation_summary TEXT,
+                blast_data TEXT
             )
         """)
+
+        # Auto-migrate history table schema if blast_data column is missing
+        existing_cols = [r[1] for r in conn.execute("PRAGMA table_info(history)").fetchall()]
+        if "blast_data" not in existing_cols:
+            conn.execute("ALTER TABLE history ADD COLUMN blast_data TEXT")
 
         # Seed Default Laboratory & Default Users if empty
         count_labs = conn.execute("SELECT COUNT(*) FROM laboratories").fetchone()[0]
@@ -148,8 +155,8 @@ def _init_db():
                                 INSERT INTO history (
                                     timestamp, sequence, predicted_disease, confidence,
                                     confidence_level, model, all_predictions, sequence_length,
-                                    inference_time_ms, shap_explanation, mutation_summary
-                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                    inference_time_ms, shap_explanation, mutation_summary, blast_data
+                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                             """, (
                                 r.get("timestamp", datetime.now(timezone.utc).isoformat()),
                                 r.get("sequence", "")[:100],
@@ -162,6 +169,7 @@ def _init_db():
                                 r.get("inference_time_ms"),
                                 r.get("shap_explanation"),
                                 r.get("mutation_summary"),
+                                json.dumps(r.get("blast")) if r.get("blast") else None,
                             ))
                         conn.commit()
         except Exception:
@@ -182,23 +190,25 @@ def add_record(
     inference_time_ms: Optional[float] = None,
     shap_explanation: Optional[str] = None,
     mutation_summary: Optional[str] = None,
+    blast_data: Optional[dict] = None,
 ) -> int:
     """Add a prediction record to history database."""
     ts = datetime.now(timezone.utc).isoformat()
     seq_short = str(sequence)[:100]
     all_pred_str = json.dumps(all_predictions[:5])
+    blast_str = json.dumps(blast_data) if blast_data else None
 
     with _get_connection() as conn:
         cursor = conn.execute("""
             INSERT INTO history (
                 timestamp, sequence, predicted_disease, confidence,
                 confidence_level, model, all_predictions, sequence_length,
-                inference_time_ms, shap_explanation, mutation_summary
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                inference_time_ms, shap_explanation, mutation_summary, blast_data
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             ts, seq_short, predicted_disease, float(confidence),
             confidence_level, model, all_pred_str, int(sequence_length),
-            inference_time_ms, shap_explanation, mutation_summary
+            inference_time_ms, shap_explanation, mutation_summary, blast_str
         ))
         conn.commit()
         return cursor.lastrowid
@@ -209,6 +219,13 @@ def _row_to_dict(row: sqlite3.Row) -> dict:
         preds = json.loads(row["all_predictions"])
     except Exception:
         preds = []
+
+    blast_obj = None
+    try:
+        if "blast_data" in row.keys() and row["blast_data"]:
+            blast_obj = json.loads(row["blast_data"])
+    except Exception:
+        blast_obj = None
 
     return {
         "id": row["id"],
@@ -223,6 +240,7 @@ def _row_to_dict(row: sqlite3.Row) -> dict:
         "inference_time_ms": row["inference_time_ms"],
         "shap_explanation": row["shap_explanation"],
         "mutation_summary": row["mutation_summary"],
+        "blast": blast_obj,
     }
 
 

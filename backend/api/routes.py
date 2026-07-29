@@ -13,8 +13,10 @@ Extends the original routes with:
 """
 from __future__ import annotations
 
+import json
 import logging
 from io import BytesIO
+from pathlib import Path
 
 from typing import Optional, List
 from fastapi import APIRouter, HTTPException, Query, Header, Depends
@@ -24,6 +26,7 @@ from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+BASE_DIR = Path(__file__).resolve().parents[2]
 
 
 try:
@@ -97,6 +100,8 @@ try:
     )
     from backend.utils.tokenizer import prepare_model_input, EXPECTED_LENGTH
     from backend.utils.disease_mapper import get_disease
+    from backend.services.evidence_builder import build_genomic_evidence
+    from backend.services.blast_service import execute_blast_search
 except ImportError:
     from predictor.predictor import predict_disease
     from services.report_generator import generate_prediction_report_pdf
@@ -119,6 +124,8 @@ except ImportError:
     )
     from utils.tokenizer import prepare_model_input, EXPECTED_LENGTH
     from utils.disease_mapper import get_disease
+    from services.evidence_builder import build_genomic_evidence
+    from services.blast_service import execute_blast_search
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -216,7 +223,7 @@ def health_check():
 # ============================================================
 
 @router.post("/predict")
-def predict(
+async def predict(
     request: PredictionRequest,
     model: str = Query("cnn", description="Model to use: cnn, lstm, transformer"),
     explain: bool = Query(False, description="Run SHAP explainability"),
@@ -226,6 +233,24 @@ def predict(
 
     try:
         result = _run_model(request.sequence, model)
+
+        # Attach Genomic Evidence Layer (Async Local KB + Cache + ClinVar/NCBI parallel fallback)
+        try:
+            evidence_obj = await build_genomic_evidence(
+                prediction_disease=result["predicted_disease"],
+                cnn_confidence=result["confidence"],
+            )
+            result["evidence"] = evidence_obj
+        except Exception as ev_exc:
+            logger.warning(f"Genomic evidence builder exception: {ev_exc}")
+            result["evidence"] = {
+                "prediction": result["predicted_disease"],
+                "cnn_confidence": result["confidence"],
+                "evidence_score": "No External Evidence",
+                "evidence_summary": "No external genomic evidence available.",
+                "sources": [],
+                "verified_badges": {"local_genomeai": False, "clinvar": False, "ncbi": False},
+            }
 
         # SHAP explainability
         shap_result = None
@@ -272,6 +297,19 @@ def predict(
         )
         result["ai_insights"] = " ".join(insights_parts)
 
+        # Attach NCBI Remote BLAST similarity analysis
+        try:
+            blast_res = await execute_blast_search(request.sequence)
+            result["blast"] = blast_res
+        except Exception as blast_exc:
+            logger.warning(f"BLAST search execution exception: {blast_exc}")
+            result["blast"] = {
+                "status": "failed",
+                "error": f"BLAST execution failed: {blast_exc}",
+                "query_length": len(request.sequence),
+                "top_hit": None,
+            }
+
         # Save to history via SQLAlchemy ORM
         try:
             import json
@@ -299,15 +337,6 @@ def predict(
             db.add(orm_analysis)
             db.commit()
 
-            # Create corresponding Report record
-            orm_report = Report(
-                analysis_id=analysis_id,
-                report_filename=f"GenomeAI_Report_{analysis_id}.pdf",
-                report_path=f"/reports/{analysis_id}.pdf"
-            )
-            db.add(orm_report)
-            db.commit()
-
             add_record(
                 sequence=request.sequence,
                 predicted_disease=result["predicted_disease"],
@@ -318,11 +347,12 @@ def predict(
                 sequence_length=result["sequence_length"],
                 inference_time_ms=result.get("inference_time_ms"),
                 shap_explanation=result.get("shap_explanation"),
+                blast_data=result.get("blast"),
             )
         except Exception as exc:
             logger.warning(f"Failed to save prediction history: {exc}")
 
-        return {"success": True, "result": result}
+        return {"success": True, "result": result, "blast": result.get("blast")}
 
 
     except ValueError as e:
@@ -340,19 +370,36 @@ def predict(
 
 
 # ============================================================
-# Predict — Extended (full suite: predict + mutation + shap)
+# Predict — Extended (full suite: predict + mutation + shap + blast)
 # ============================================================
 
 @router.post("/predict/extended")
-def predict_extended(
+async def predict_extended(
     request: PredictionRequest,
     model: str = Query("cnn", description="Model to use: cnn, lstm, transformer"),
 ):
-    """Full prediction with mutation analysis and SHAP explainability."""
+    """Full prediction with mutation analysis, SHAP explainability, Genomic Evidence, and BLAST sequence search."""
     try:
         result = _run_model(request.sequence, model)
         tokens = prepare_model_input(request.sequence)
-        cleaned = str(request.sequence).strip().upper()
+
+        # Attach Genomic Evidence Layer
+        try:
+            evidence_obj = await build_genomic_evidence(
+                prediction_disease=result["predicted_disease"],
+                cnn_confidence=result["confidence"],
+            )
+            result["evidence"] = evidence_obj
+        except Exception as ev_exc:
+            logger.warning(f"Extended genomic evidence builder exception: {ev_exc}")
+            result["evidence"] = {
+                "prediction": result["predicted_disease"],
+                "cnn_confidence": result["confidence"],
+                "evidence_score": "No External Evidence",
+                "evidence_summary": "No external genomic evidence available.",
+                "sources": [],
+                "verified_badges": {"local_genomeai": False, "clinvar": False, "ncbi": False},
+            }
 
         # Mutation analysis
         try:
@@ -380,6 +427,19 @@ def predict_extended(
             result["shap_explainability"] = None
             result["shap_explanation"] = None
 
+        # Attach NCBI Remote BLAST similarity analysis
+        try:
+            blast_res = await execute_blast_search(request.sequence)
+            result["blast"] = blast_res
+        except Exception as blast_exc:
+            logger.warning(f"Extended BLAST search execution exception: {blast_exc}")
+            result["blast"] = {
+                "status": "failed",
+                "error": f"BLAST execution failed: {blast_exc}",
+                "query_length": len(request.sequence),
+                "top_hit": None,
+            }
+
         # AI Insights
         insights = [f"The {result['model']} model predicted {result['predicted_disease']} "
                     f"with {result['confidence']}% confidence ({result['confidence_level']})."]
@@ -402,11 +462,12 @@ def predict_extended(
                 inference_time_ms=result.get("inference_time_ms"),
                 shap_explanation=result.get("shap_explanation"),
                 mutation_summary=result.get("mutation_summary"),
+                blast_data=result.get("blast"),
             )
         except Exception as exc:
             logger.warning(f"Failed to save prediction history: {exc}")
 
-        return {"success": True, "result": result}
+        return {"success": True, "result": result, "blast": result.get("blast")}
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail={"message": str(e)})
@@ -419,17 +480,75 @@ def predict_extended(
 
 
 # ============================================================
+# Predict — Standalone BLAST Endpoint
+# ============================================================
+
+class BlastRequest(BaseModel):
+    sequence: str = Field(..., min_length=1, max_length=5000, description="DNA sequence string (A, T, G, C, N)")
+
+
+@router.post("/predict/blast")
+async def run_blast_alignment(request: BlastRequest):
+    """Execute NCBI Remote BLAST search for input sequence."""
+    try:
+        blast_res = await execute_blast_search(request.sequence)
+        return {"success": True, "blast": blast_res}
+    except Exception as exc:
+        logger.exception("Failed to execute BLAST search")
+        raise HTTPException(status_code=500, detail={"message": f"BLAST search failed: {exc}"})
+
+
+
+# ============================================================
+# Predict — Dedicated Evidence Endpoint
+# ============================================================
+
+class EvidenceQueryRequest(BaseModel):
+    disease_name: str = Field(..., min_length=2, max_length=100)
+    gene_symbol: Optional[str] = None
+    variation_id: Optional[str] = None
+    rsid: Optional[str] = None
+
+
+@router.post("/predict/evidence")
+async def get_prediction_evidence(request: EvidenceQueryRequest):
+    """Retrieve standalone genomic evidence for a target disease or gene query."""
+    try:
+        evidence_obj = await build_genomic_evidence(
+            prediction_disease=request.disease_name,
+            cnn_confidence=95.0,
+            gene_symbol=request.gene_symbol,
+            variation_id=request.variation_id,
+            rsid=request.rsid,
+        )
+        return {"success": True, "evidence": evidence_obj}
+    except Exception as exc:
+        logger.exception("Failed to build genomic evidence")
+        raise HTTPException(status_code=500, detail={"message": "Evidence retrieval failed."})
+
+
+# ============================================================
 # Report
 # ============================================================
 
 @router.post("/predict/report")
-def predict_report(
+async def predict_report(
     request: PredictionRequest,
     model: str = Query("cnn", description="Model to use: cnn, lstm, transformer"),
     patient_name: str = Query("", description="Optional patient name for report"),
 ):
     try:
         result = _run_model(request.sequence, model)
+
+        # Attach Genomic Evidence Layer for PDF report
+        try:
+            evidence_obj = await build_genomic_evidence(
+                prediction_disease=result["predicted_disease"],
+                cnn_confidence=result["confidence"],
+            )
+            result["evidence"] = evidence_obj
+        except Exception:
+            pass
 
         # Get SHAP and mutation data for enhanced report
         shap_text = None
@@ -443,8 +562,36 @@ def predict_report(
         except Exception:
             pass
 
-        result["shap_explanation"] = shap_text
-        result["mutation_summary"] = mutation_text
+        # Attach NCBI Remote BLAST similarity analysis for PDF report
+        try:
+            blast_res = await execute_blast_search(request.sequence)
+            result["blast"] = blast_res
+        except Exception as blast_exc:
+            logger.warning(f"Report BLAST execution exception: {blast_exc}")
+            result["blast"] = {
+                "status": "failed",
+                "error": f"BLAST execution failed: {blast_exc}",
+                "query_length": len(request.sequence),
+                "top_hit": None,
+            }
+
+        # Save to history
+        try:
+            add_record(
+                sequence=request.sequence,
+                predicted_disease=result["predicted_disease"],
+                confidence=result["confidence"],
+                confidence_level=result["confidence_level"],
+                model=result["model"],
+                all_predictions=result["all_predictions"],
+                sequence_length=result["sequence_length"],
+                inference_time_ms=result.get("inference_time_ms"),
+                shap_explanation=shap_text,
+                mutation_summary=mutation_text,
+                blast_data=result.get("blast"),
+            )
+        except Exception:
+            pass
 
         pdf_bytes = generate_prediction_report_pdf(request.sequence, result, patient_name or None)
 
@@ -464,6 +611,44 @@ def predict_report(
             status_code=500,
             detail={"message": "Report generation failed. Please try again later."},
         )
+
+
+# ============================================================
+# Dynamic Model Evaluation Metrics API
+# ============================================================
+
+@router.get("/model/metrics")
+def get_model_metrics():
+    """Retrieve dynamically generated evaluation metrics of the latest trained model."""
+    metrics_path = BASE_DIR / "trained_models" / "model_metrics.json"
+    if metrics_path.exists():
+        try:
+            with open(metrics_path, "r") as f:
+                data = json.load(f)
+            return {
+                "success": True,
+                "available": True,
+                **data
+            }
+        except Exception as exc:
+            logger.warning(f"Failed to read model_metrics.json: {exc}")
+
+    return {
+        "success": False,
+        "available": False,
+        "model_name": "Multi-Scale Parallel SE-ResCNN",
+        "accuracy": None,
+        "test_accuracy": None,
+        "macro_f1": None,
+        "weighted_f1": None,
+        "balanced_accuracy": None,
+        "training_loss": None,
+        "inference_time_ms": None,
+        "dataset_size": 19984,
+        "test_samples": 2998,
+        "trained_on": None,
+        "message": "CNN ACCURACY: Not Available"
+    }
 
 
 # ============================================================

@@ -95,6 +95,18 @@ export async function predictSequenceExtended(sequence, { model = 'cnn' } = {}) 
   return data;
 }
 
+export async function runBlastSearch(sequence) {
+  const cleanedSequence = String(sequence)
+    .replace(/\s+/g, '')
+    .toUpperCase();
+
+  const { data } = await client.post('/predict/blast', {
+    sequence: cleanedSequence,
+  });
+
+  return data;
+}
+
 // ============================================================
 // Report
 // ============================================================
@@ -228,6 +240,11 @@ export async function deleteLabUser(userId) {
 
 export async function fetchLabDetails() {
   const { data } = await client.get('/lis/lab');
+  return data;
+}
+
+export async function fetchModelMetrics() {
+  const { data } = await client.get('/model/metrics');
   return data;
 }
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Dna, ShieldCheck, Cpu, Database, Sparkles, Activity, FileText, Clock,
@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 
 import Sidebar from '../components/Sidebar.jsx';
+import { fetchModelMetrics } from '../api/client.js';
 import styles from './ApiDocs.module.css';
 
 const SUPPORTED_DISEASES = [
@@ -45,6 +46,17 @@ const KEY_FEATURES = [
 
 export default function ApiDocs() {
   const [techOpen, setTechOpen] = useState(false);
+  const [modelMetrics, setModelMetrics] = useState(null);
+
+  useEffect(() => {
+    fetchModelMetrics()
+      .then((res) => {
+        if (res && res.available !== false && res.accuracy) {
+          setModelMetrics(res);
+        }
+      })
+      .catch(() => setModelMetrics(null));
+  }, []);
 
   return (
     <div className={styles.layout}>
@@ -197,7 +209,7 @@ export default function ApiDocs() {
           </div>
           <div className={styles.statsGrid}>
             <div className={styles.statCard}>
-              <div className={styles.statVal}>68,527</div>
+              <div className={styles.statVal}>{modelMetrics ? modelMetrics.dataset_size?.toLocaleString() : '19,984'}</div>
               <div className={styles.statLabel}>ClinVar Variant Targets</div>
             </div>
             <div className={styles.statCard}>
@@ -205,7 +217,7 @@ export default function ApiDocs() {
               <div className={styles.statLabel}>Disease Categories</div>
             </div>
             <div className={styles.statCard}>
-              <div className={styles.statVal}>65.46%</div>
+              <div className={styles.statVal}>{modelMetrics ? `${modelMetrics.accuracy}%` : 'Not Available'}</div>
               <div className={styles.statLabel}>Measured Validation Accuracy</div>
             </div>
             <div className={styles.statCard}>

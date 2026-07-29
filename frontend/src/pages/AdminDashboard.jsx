@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 
 import Sidebar from '../components/Sidebar.jsx';
-import { fetchHealth, fetchHistory, fetchAnalytics } from '../api/client.js';
+import { fetchHealth, fetchHistory, fetchAnalytics, fetchModelMetrics } from '../api/client.js';
 import styles from './AdminDashboard.module.css';
 
 export default function AdminDashboard() {
@@ -15,18 +15,20 @@ export default function AdminDashboard() {
     totalAnalyses: 0,
     recentList: [],
     systemStatus: 'Checking...',
-    datasetSize: '68,527',
+    datasetSize: '19,984',
   });
+  const [modelMetrics, setModelMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
     const loadDashboardData = async () => {
       try {
-        const [healthRes, historyRes, analyticsRes] = await Promise.all([
+        const [healthRes, historyRes, analyticsRes, metricsRes] = await Promise.all([
           fetchHealth().catch(() => null),
           fetchHistory({ limit: 6 }).catch(() => ({ items: [], total: 0 })),
           fetchAnalytics().catch(() => null),
+          fetchModelMetrics().catch(() => null),
         ]);
 
         if (mounted) {
@@ -36,8 +38,13 @@ export default function AdminDashboard() {
             systemStatus: healthRes ? 'Online' : 'Offline',
             datasetSize: analyticsRes?.analytics?.dataset_size
               ? Number(analyticsRes.analytics.dataset_size).toLocaleString()
-              : '68,527',
+              : '19,984',
           });
+          if (metricsRes && metricsRes.available !== false && metricsRes.accuracy) {
+            setModelMetrics(metricsRes);
+          } else {
+            setModelMetrics(null);
+          }
         }
       } finally {
         if (mounted) setLoading(false);
@@ -85,10 +92,10 @@ export default function AdminDashboard() {
               </div>
 
               <div className={styles.statList}>
-                <div><span>Validation Acc:</span> <strong>65.46%</strong></div>
-                <div><span>Macro F1:</span> <strong>87.0%</strong></div>
-                <div><span>Dataset Variants:</span> <strong>{stats.datasetSize}</strong></div>
-                <div><span>Engine Latency:</span> <strong>~12 ms</strong></div>
+                <div><span>Test Accuracy:</span> <strong>{modelMetrics ? `${modelMetrics.accuracy}%` : 'Not Available'}</strong></div>
+                <div><span>Macro F1:</span> <strong>{modelMetrics ? `${modelMetrics.macro_f1}%` : 'N/A'}</strong></div>
+                <div><span>Dataset Variants:</span> <strong>{modelMetrics ? modelMetrics.dataset_size?.toLocaleString() : stats.datasetSize}</strong></div>
+                <div><span>Engine Latency:</span> <strong>{modelMetrics ? `~${modelMetrics.inference_time_ms} ms` : '~9.5 ms'}</strong></div>
               </div>
             </div>
           </div>
@@ -119,8 +126,12 @@ export default function AdminDashboard() {
               <BarChart2 className={styles.iconNavy} size={18} />
               <span>CNN Accuracy</span>
             </div>
-            <div className={styles.metricVal}>65.46%</div>
-            <span className={styles.subText}>68,527 ClinVar variants</span>
+            <div className={styles.metricVal}>
+              {modelMetrics ? `${modelMetrics.accuracy}%` : 'Not Available'}
+            </div>
+            <span className={styles.subText}>
+              {modelMetrics ? `${modelMetrics.test_samples?.toLocaleString()} Test Samples` : '19,984 genomic samples'}
+            </span>
           </div>
 
           <div className={styles.metricCard}>

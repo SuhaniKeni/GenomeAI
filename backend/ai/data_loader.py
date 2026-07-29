@@ -96,3 +96,11 @@ def load_data(clinical_significance_filter=None, return_val=False):
 
     return X_train, X_test, y_train, y_test
 
+
+def load_full_dataset():
+    df = pd.read_csv(INPUT)
+    X = np.array(df["MutatedTokens"].apply(ast.literal_eval).tolist(), dtype=np.int32)
+    y = df["Label"].values
+    return X, y
+
+

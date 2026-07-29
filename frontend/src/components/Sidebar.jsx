@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Dna, FileText, Clock, Users, Building2,
-  Settings, Info, LogOut, ChevronLeft, ChevronRight, ShieldCheck, User
+  Settings, Info, LogOut, ChevronLeft, ChevronRight, ShieldCheck, User, FileCheck
 } from 'lucide-react';
 
 import { fetchCurrentUser, logoutUser } from '../api/client';
@@ -12,8 +12,9 @@ import styles from './Sidebar.module.css';
 const sidebarNavLinks = [
   { label: 'Dashboard', to: '/', icon: LayoutDashboard },
   { label: 'New DNA Analysis', to: '/analysis', icon: Dna },
-  { label: 'Reports', to: '/reports', icon: FileText },
   { label: 'Analysis History', to: '/history', icon: Clock },
+  { label: 'Supporting Evidence', to: '/evidence', icon: FileCheck },
+  { label: 'Reports', to: '/reports', icon: FileText },
   { label: 'Laboratory Users', to: '/users', icon: Users },
   { label: 'Laboratory Management', to: '/lab-management', icon: Building2 },
   { label: 'Settings', to: '/settings', icon: Settings },
@@ -31,8 +32,8 @@ export default function Sidebar() {
   });
 
   useEffect(() => {
-    // Dynamically set CSS custom property --sidebar-width
-    const width = collapsed ? '72px' : '250px';
+    // Dynamically set CSS custom property --sidebar-width (reduced width for LIS density)
+    const width = collapsed ? '64px' : '212px';
     document.documentElement.style.setProperty('--sidebar-width', width);
   }, [collapsed]);
 

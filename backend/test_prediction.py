@@ -17,12 +17,12 @@ def test_predict_disease_uses_mocked_cnn_predict(monkeypatch):
 	sequence = "ATGCN" * 40 + "A"
 	result = predictor_module.predict_disease(sequence)
 
-	assert result["predicted_disease"] == "Lung Cancer"
+	assert result["predicted_disease"] == "Hereditary Breast & Ovarian Cancer"
 	assert result["confidence"] == 91.0
 	assert result["confidence_level"] == "Very High"
 	assert result["model"] == "CNN"
 	assert result["sequence_length"] == 201
-	assert len(result["all_predictions"]) == 3
+	assert len(result["all_predictions"]) == 5
 
 
 if __name__ == "__main__":
