@@ -1,4 +1,4 @@
-# Render Infrastructure-as-Code Blueprint Configuration for GenomeAI
+# Render Infrastructure-as-Code Blueprint Configuration for GenomeAI (Free Tier Compatible)
 # Single-URL Web Application (React Frontend + FastAPI Backend) & PostgreSQL Database
 
 services:
@@ -6,7 +6,7 @@ services:
     name: genomeai
     env: python
     region: oregon
-    plan: starter
+    plan: free
     buildCommand: "./build.sh"
     startCommand: "python -m uvicorn backend.main:app --host 0.0.0.0 --port $PORT"
     autoDeploy: true
@@ -25,13 +25,9 @@ services:
         value: 20.12.2
       - key: ALLOWED_ORIGINS
         value: "*"
-    disk:
-      name: genomeai-storage
-      mountPath: /app/storage
-      sizeGB: 5
 
 databases:
   - name: genomeai-db
     databaseName: genomeai
     user: genomeai_user
-    plan: starter
+    plan: free
