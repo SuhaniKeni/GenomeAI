@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@microsoft/clarity": "^1.0.2",
     "axios": "^1.7.9",
     "framer-motion": "^11.18.1",
     "lucide-react": "^0.469.0",

@@ -265,3 +265,75 @@
   padding: 36px !important;
   color: #64748b;
 }
+
+.stateBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  color: #64748b;
+}
+
+.spinIcon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.errorCell {
+  padding: 40px 16px !important;
+  text-align: center;
+  background: #FEF2F2;
+}
+
+.errorDisplayBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+.errorIcon {
+  color: #DC2626;
+  margin-bottom: 10px;
+}
+
+.errorTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #991B1B;
+  margin: 0 0 6px 0;
+}
+
+.errorReason {
+  font-size: 0.9rem;
+  color: #7F1D1D;
+  margin: 0 0 16px 0;
+  line-height: 1.4;
+}
+
+.retryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #DC2626;
+  color: #FFFFFF;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+}
+
+.retryBtn:hover {
+  background: #B91C1C;
+}

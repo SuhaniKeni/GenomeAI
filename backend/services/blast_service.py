@@ -15,7 +15,12 @@ import time
 from io import StringIO
 from typing import Any, Optional
 
-from Bio.Blast import NCBIWWW, NCBIXML
+try:
+    from Bio.Blast import NCBIWWW, NCBIXML
+except Exception as e:
+    NCBIWWW = None
+    NCBIXML = None
+    logging.getLogger(__name__).warning(f"Biopython Bio.Blast import unavailable: {e}")
 
 logger = logging.getLogger(__name__)
 

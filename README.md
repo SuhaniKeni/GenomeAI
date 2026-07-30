@@ -424,6 +424,63 @@ Interactive OpenAPI docs are available at `http://127.0.0.1:8000/docs` when runn
 
 ---
 
+## 🚀 Quick Start & Local Development Workflow
+
+Running the complete enterprise application—including React frontend, FastAPI APIs, PDF report generation, and database audit logs—is straightforward:
+
+### 🚀 1. Launching GenomeAI (Local Development)
+
+Double-click `run_genomeai.bat` or run from terminal:
+```powershell
+.\run_genomeai.bat
+```
+
+This script automatically starts:
+1. **FastAPI Backend**: `http://127.0.0.1:8000` (API Docs at `http://127.0.0.1:8000/docs`)
+2. **React Frontend**: `http://localhost:5173` (Vite dev server with `/api` proxying)
+
+### 🛑 2. Stopping GenomeAI
+
+Double-click `stop_genomeai.bat` or run:
+```powershell
+.\stop_genomeai.bat
+```
+
+### 🛠️ 3. Independent Component Execution
+
+Developers can run components independently:
+
+- **FastAPI Backend**:
+  ```powershell
+  .\venv\Scripts\Activate.ps1
+  python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
+  ```
+- **React Frontend**:
+  ```powershell
+  cd frontend
+  npm run dev
+  ```
+
+---
+
+## 📊 Microsoft Clarity Analytics Configuration
+
+GenomeAI is integrated with `@microsoft/clarity` for user session analytics during production deployments.
+
+### Configuring Your Clarity Project ID
+
+1. Sign in to your [Microsoft Clarity Dashboard](https://clarity.microsoft.com) and create or select a project.
+2. Copy your **Project ID** (e.g. `k8s9x2m1`).
+3. Open or edit `frontend/.env`:
+   ```env
+   VITE_CLARITY_PROJECT_ID=YOUR_PROJECT_ID
+   ```
+4. **Behavior Rules**:
+   - **Production Deployment**: Clarity initializes automatically after app boot using non-blocking deferred execution (`requestIdleCallback`).
+   - **Localhost Development**: Clarity is automatically disabled during normal `localhost` / `127.0.0.1` development to preserve developer privacy and prevent test data pollution.
+
+---
+
 ## ⚙️ Installation
 
 ### Prerequisites

@@ -103,29 +103,54 @@ try:
     from backend.services.evidence_builder import build_genomic_evidence
     from backend.services.blast_service import execute_blast_search
 except ImportError:
-    from predictor.predictor import predict_disease
-    from services.report_generator import generate_prediction_report_pdf
-    from services.explainability_service import (
-        compute_shap_values,
-        generate_explanation_text,
-    )
-    from services.mutation_analysis import (
-        compare_to_consensus,
-        get_mutation_summary_text,
-    )
-    from services.benchmark_service import get_cached_benchmark, run_benchmark
-    from services.analytics_service import get_cached_analytics
-    from services.prediction_history import (
-        add_record,
-        get_history,
-        delete_record,
-        clear_history,
-        get_statistics,
-    )
-    from utils.tokenizer import prepare_model_input, EXPECTED_LENGTH
-    from utils.disease_mapper import get_disease
-    from services.evidence_builder import build_genomic_evidence
-    from services.blast_service import execute_blast_search
+    try:
+        from backend.predictor.predictor import predict_disease
+        from backend.services.report_generator import generate_prediction_report_pdf
+        from backend.services.explainability_service import (
+            compute_shap_values,
+            generate_explanation_text,
+        )
+        from backend.services.mutation_analysis import (
+            compare_to_consensus,
+            get_mutation_summary_text,
+        )
+        from backend.services.benchmark_service import get_cached_benchmark, run_benchmark
+        from backend.services.analytics_service import get_cached_analytics
+        from backend.services.prediction_history import (
+            add_record,
+            get_history,
+            delete_record,
+            clear_history,
+            get_statistics,
+        )
+        from backend.utils.tokenizer import prepare_model_input, EXPECTED_LENGTH
+        from backend.utils.disease_mapper import get_disease
+        from backend.services.evidence_builder import build_genomic_evidence
+        from backend.services.blast_service import execute_blast_search
+    except ImportError:
+        from predictor.predictor import predict_disease
+        from services.report_generator import generate_prediction_report_pdf
+        from services.explainability_service import (
+            compute_shap_values,
+            generate_explanation_text,
+        )
+        from services.mutation_analysis import (
+            compare_to_consensus,
+            get_mutation_summary_text,
+        )
+        from services.benchmark_service import get_cached_benchmark, run_benchmark
+        from services.analytics_service import get_cached_analytics
+        from services.prediction_history import (
+            add_record,
+            get_history,
+            delete_record,
+            clear_history,
+            get_statistics,
+        )
+        from utils.tokenizer import prepare_model_input, EXPECTED_LENGTH
+        from utils.disease_mapper import get_disease
+        from services.evidence_builder import build_genomic_evidence
+        from services.blast_service import execute_blast_search
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -710,16 +735,18 @@ def history(
     disease_filter: str = Query(None, alias="disease"),
 ):
     try:
-        return get_history(
+        data = get_history(
             limit=limit,
             offset=offset,
             search=search,
             model_filter=model_filter,
             disease_filter=disease_filter,
         )
-    except Exception:
+        logger.info(f"[API /history Debug] Returned {len(data.get('records', []))} records (Total: {data.get('total')}) from DB: {data.get('db_path')}")
+        return data
+    except Exception as exc:
         logger.exception("History fetch failed")
-        raise HTTPException(status_code=500, detail={"message": "Failed to fetch history."})
+        raise HTTPException(status_code=500, detail={"message": f"Database operation failed: {str(exc)}"})
 
 
 @router.delete("/history/{record_id}")

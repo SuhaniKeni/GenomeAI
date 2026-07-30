@@ -26,15 +26,16 @@ export default function AdminDashboard() {
       try {
         const [healthRes, historyRes, analyticsRes, metricsRes] = await Promise.all([
           fetchHealth().catch(() => null),
-          fetchHistory({ limit: 6 }).catch(() => ({ items: [], total: 0 })),
+          fetchHistory({ limit: 6 }).catch(() => ({ records: [], items: [], total: 0 })),
           fetchAnalytics().catch(() => null),
           fetchModelMetrics().catch(() => null),
         ]);
 
         if (mounted) {
+          const list = historyRes?.records || historyRes?.items || [];
           setStats({
-            totalAnalyses: historyRes?.total || 0,
-            recentList: historyRes?.items || [],
+            totalAnalyses: historyRes?.total ?? list.length,
+            recentList: list,
             systemStatus: healthRes ? 'Online' : 'Offline',
             datasetSize: analyticsRes?.analytics?.dataset_size
               ? Number(analyticsRes.analytics.dataset_size).toLocaleString()

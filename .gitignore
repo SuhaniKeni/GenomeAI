@@ -1,42 +1,48 @@
-# Python
+# Python Virtual Environment & Bytecode
 venv/
+.venv/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-
-# Environment
-.env
-.env.*
-
-# Node
-node_modules/
-dist/
-build/
-
-# VS Code
-.vscode/
-
-# Logs
-*.log
-
-# Model files
-*.keras
-*.h5
-*.pth
-*.pt
-
-# Large datasets
-datasets/
-data/
-
-# Cache
-.cache/
 .pytest_cache/
 
-# OS
+# Node & Build Artifacts
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+build/
+
+# Environment Secrets
+.env
+.env.local
+.env.*.local
+
+# IDE & OS
+.vscode/
+.idea/
 .DS_Store
 Thumbs.db
 
-# Databases
+# Logs & Temporary Files
+*.log
+tools/
+scratch/
+
+# Database Files
 *.db
+*.sqlite
+*.sqlite3
+
+# Model Weight Exceptions (allow production trained model weights to be tracked)
+*.h5
+*.pth
+*.pt
+!trained_models/best_cnn_model.keras
+!trained_models/best_lstm_model.keras
+!trained_models/model_metrics.json
+
+# Raw Datasets Directory
+datasets/
+data/

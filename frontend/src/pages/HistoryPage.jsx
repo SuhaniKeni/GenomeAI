@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import {
-  Search, Trash2, FileText, Clock, RefreshCw, AlertCircle, CheckCircle2, ShieldCheck, Eye, Dna, FileCheck
+  Search, Trash2, FileText, Clock, RefreshCw, AlertCircle, CheckCircle2, Eye, Dna, FileCheck
 } from 'lucide-react';
 
 import Sidebar from '../components/Sidebar.jsx';
@@ -10,26 +9,36 @@ import HistoryDetailsModal from '../components/History/HistoryDetailsModal.jsx';
 import { fetchHistory, deleteHistoryRecord, downloadPredictionReport } from '../api/client.js';
 import styles from './HistoryPage.module.css';
 
-
 export default function HistoryPage() {
   const navigate = useNavigate();
   const [historyItems, setHistoryItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const loadHistory = async () => {
     setLoading(true);
-    setError('');
+    setError(null);
     try {
+      console.log('[HistoryPage Debug] Requesting history records for search term:', searchTerm);
       const data = await fetchHistory({ limit: 100, search: searchTerm });
-      setHistoryItems(data.items || []);
-      setTotal(data.total || 0);
-    } catch {
-      setError('Could not load prediction history from database.');
+      const records = data.records || data.items || [];
+      console.log('[HistoryPage Debug] History loaded successfully. Records count:', records.length, '| Total count:', data.total);
+      setHistoryItems(records);
+      setTotal(data.total ?? records.length);
+      setError(null);
+    } catch (err) {
+      console.error('[HistoryPage Debug] Error fetching history:', err);
+      const reasonMsg =
+        err?.response?.data?.detail?.message ||
+        err?.response?.data?.detail ||
+        err?.message ||
+        'Unable to connect to the GenomeAI backend server.';
+      setError(reasonMsg);
+      setHistoryItems([]);
     } finally {
       setLoading(false);
     }
@@ -45,8 +54,8 @@ export default function HistoryPage() {
       await deleteHistoryRecord(id);
       setHistoryItems((prev) => prev.filter((item) => item.id !== id));
       setTotal((prev) => Math.max(0, prev - 1));
-    } catch {
-      setError('Failed to delete history record.');
+    } catch (err) {
+      alert('Failed to delete history record.');
     }
   };
 
@@ -63,7 +72,7 @@ export default function HistoryPage() {
       anchor.click();
       URL.revokeObjectURL(url);
     } catch {
-      setError('Could not generate PDF report for this record.');
+      alert('Could not generate PDF report for this record.');
     }
   };
 
@@ -87,7 +96,7 @@ export default function HistoryPage() {
             </p>
           </div>
           <div className={styles.totalBadge}>
-            <strong>{total}</strong> Records Archived
+            <strong>{loading ? '...' : total}</strong> Records Archived
           </div>
         </div>
 
@@ -102,17 +111,10 @@ export default function HistoryPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <button type="button" className={styles.refreshBtn} onClick={loadHistory}>
-              <RefreshCw size={14} /> Refresh
+            <button type="button" className={styles.refreshBtn} onClick={loadHistory} disabled={loading}>
+              <RefreshCw size={14} className={loading ? styles.spinIcon : ''} /> Refresh
             </button>
           </div>
-
-          {error && (
-            <div className={styles.errorBox}>
-              <AlertCircle size={16} />
-              <span>{error}</span>
-            </div>
-          )}
 
           <div className={styles.tableWrap}>
             <table className={styles.table}>
@@ -130,12 +132,46 @@ export default function HistoryPage() {
               </thead>
               <tbody>
                 {loading ? (
+                  /* 1. LOADING STATE ONLY */
                   <tr>
                     <td colSpan={8} className={styles.emptyCell}>
-                      Loading analysis records...
+                      <div className={styles.stateBox}>
+                        <RefreshCw size={24} className={styles.spinIcon} style={{ color: 'var(--genome-blue, #3A6FD8)' }} />
+                        <span style={{ fontWeight: 600, marginTop: '8px' }}>Loading analysis records from database...</span>
+                      </div>
                     </td>
                   </tr>
-                ) : historyItems.length > 0 ? (
+                ) : error ? (
+                  /* 2. ERROR STATE ONLY */
+                  <tr>
+                    <td colSpan={8} className={styles.errorCell}>
+                      <div className={styles.errorDisplayBox}>
+                        <AlertCircle size={28} className={styles.errorIcon} />
+                        <h4 className={styles.errorTitle}>Unable to retrieve analysis history.</h4>
+                        <p className={styles.errorReason}>
+                          <strong>Reason:</strong> {error}
+                        </p>
+                        <button type="button" className={styles.retryBtn} onClick={loadHistory}>
+                          <RefreshCw size={14} /> Retry Connection
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ) : historyItems.length === 0 ? (
+                  /* 3. EMPTY STATE ONLY (When request succeeded with 0 records) */
+                  <tr>
+                    <td colSpan={8} className={styles.emptyCell}>
+                      <div className={styles.stateBox}>
+                        <Clock size={28} style={{ color: 'var(--text-secondary, #718096)' }} />
+                        <span style={{ fontWeight: 600, marginTop: '8px' }}>No analysis records found.</span>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #718096)', margin: '4px 0 0 0' }}>
+                          Perform a sequence prediction to build history.
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  /* 4. SUCCESS STATE (Render Data Rows) */
                   historyItems.map((item) => (
                     <tr key={item.id}>
                       <td className={styles.idCell}>
@@ -152,12 +188,12 @@ export default function HistoryPage() {
                       </td>
                       <td>
                         {item.blast?.top_hit ? (
-                          <span style={{ color: '#38bdf8', fontWeight: 600, fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ color: 'var(--genome-blue, #3A6FD8)', fontWeight: 600, fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                             <Dna size={12} />
                             {item.blast.top_hit.gene} ({item.blast.top_hit.identity}%)
                           </span>
                         ) : (
-                          <span style={{ color: '#64748b', fontSize: '0.8rem' }}>No Match</span>
+                          <span style={{ color: 'var(--text-secondary, #718096)', fontSize: '0.8rem' }}>No Match</span>
                         )}
                       </td>
                       <td className={styles.dateCell}>{item.created_at || 'Recently'}</td>
@@ -213,12 +249,6 @@ export default function HistoryPage() {
                       </td>
                     </tr>
                   ))
-                ) : (
-                  <tr>
-                    <td colSpan={8} className={styles.emptyCell}>
-                      No analysis records found. Perform a sequence prediction to build history.
-                    </td>
-                  </tr>
                 )}
               </tbody>
             </table>

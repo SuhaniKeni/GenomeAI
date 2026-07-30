@@ -1,0 +1,75 @@
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 280px;
+  max-width: 420px;
+  padding: 10px 14px;
+  border-radius: var(--radius-input, 8px);
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-heading, #1e293b);
+}
+
+.success {
+  border-left: 4px solid var(--sequence-green, #10b981);
+}
+
+.error {
+  border-left: 4px solid var(--clinical-red, #ef4444);
+}
+
+.info {
+  border-left: 4px solid var(--genome-blue, #3b82f6);
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.iconSuccess {
+  color: var(--sequence-green, #10b981);
+  flex-shrink: 0;
+}
+
+.iconError {
+  color: var(--clinical-red, #ef4444);
+  flex-shrink: 0;
+}
+
+.iconInfo {
+  color: var(--genome-blue, #3b82f6);
+  flex-shrink: 0;
+}
+
+.message {
+  line-height: 1.4;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, #64748b);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.closeBtn:hover {
+  background: var(--bg-main, #f1f5f9);
+  color: var(--text-heading, #0f172a);
+}

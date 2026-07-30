@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL?.replace(/\/$/, '') ||
-  'http://localhost:8000';
+  '/api';
 
 const client = axios.create({
   baseURL: API_BASE_URL,
@@ -167,8 +167,29 @@ export async function fetchHistory({
   if (model) params.set('model', model);
   if (disease) params.set('disease', disease);
 
-  const { data } = await client.get(`/history?${params.toString()}`);
-  return data;
+  const endpoint = `/history?${params.toString()}`;
+  console.log('[API Client Debug] Requesting history from:', `${API_BASE_URL}${endpoint}`);
+
+  try {
+    const response = await client.get(endpoint);
+    const data = response.data || {};
+    const recordsList = data.records || data.items || [];
+
+    console.log('[API Client Debug] History response status:', response.status, '| Records:', recordsList.length, '| Total:', data.total, '| DB:', data.db_path);
+
+    return {
+      success: data.success ?? true,
+      total: data.total ?? recordsList.length,
+      offset: data.offset ?? offset,
+      limit: data.limit ?? limit,
+      records: recordsList,
+      items: recordsList,
+      db_path: data.db_path || '',
+    };
+  } catch (err) {
+    console.error('[API Client Debug] fetchHistory request failed:', err);
+    throw err;
+  }
 }
 
 export async function deleteHistoryRecord(id) {

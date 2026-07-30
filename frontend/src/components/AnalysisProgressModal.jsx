@@ -1,43 +1,50 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Loader2, Sparkles, Dna, ShieldCheck, Activity } from 'lucide-react';
+import { CheckCircle2, Loader2, Dna, ShieldCheck, Clock } from 'lucide-react';
 import styles from './AnalysisProgressModal.module.css';
 
-const LAB_PIPELINE_STEPS = [
-  { id: 1, label: 'Validating DNA Sequence', desc: 'Verifying nucleotide alphabet [A, T, G, C, N] and 201-base window' },
-  { id: 2, label: 'Checking Sequence Quality', desc: 'Calculating GC content % and nucleotide distribution' },
-  { id: 3, label: 'Encoding DNA Tokens', desc: 'Converting nucleotides to integer tensors (A=0, T=1, G=2, C=3, N=4)' },
-  { id: 4, label: 'Running GenomeAI CNN Engine', desc: 'Processing 1D Convolutional layers & multi-scale motif filters' },
-  { id: 5, label: 'Calculating Disease Probabilities', desc: 'Evaluating multi-class softmax probability distribution across 8 diseases' },
-  { id: 6, label: 'Generating Laboratory PDF Report', desc: 'Synthesizing ReportLab clinical PDF summary with disclaimers' },
-  { id: 7, label: 'Saving Analysis Record', desc: 'Persisting sample metadata and prediction to SQLite LIS database' },
-  { id: 8, label: 'Analysis Complete', desc: 'Rendering clinical summary & decision-support insights' },
+const ANALYSIS_PIPELINE_STEPS = [
+  { id: 1, label: 'Uploading', desc: 'Transferring sequence payload to Fast-API backend engine' },
+  { id: 2, label: 'Validating', desc: 'Verifying nucleotide alphabet [A, T, G, C, N] and 201 bp target window' },
+  { id: 3, label: 'Preprocessing', desc: 'Normalizing base tokens and converting to integer tensors' },
+  { id: 4, label: 'Running CNN Model', desc: 'Executing 1D Convolutional Neural Network motif feature extraction' },
+  { id: 5, label: 'Generating Results', desc: 'Computing disease association softmax probability vectors' },
+  { id: 6, label: 'Generating Report', desc: 'Synthesizing clinical decision-support PDF summary report' },
+  { id: 7, label: 'Completed', desc: 'Finalizing LIS database record and rendering summary view' },
 ];
 
 export default function AnalysisProgressModal({ isOpen, currentStep, error }) {
+  const [estTime, setEstTime] = useState(1.5);
+
+  useEffect(() => {
+    if (isOpen) {
+      setEstTime(Math.max(0.2, (1.8 - currentStep * 0.22).toFixed(1)));
+    }
+  }, [currentStep, isOpen]);
+
   if (!isOpen) return null;
 
-  const currentStepObj = LAB_PIPELINE_STEPS.find((s) => s.id === currentStep) || LAB_PIPELINE_STEPS[0];
-  const progressPercent = Math.round((currentStep / LAB_PIPELINE_STEPS.length) * 100);
+  const currentStepObj = ANALYSIS_PIPELINE_STEPS.find((s) => s.id === currentStep) || ANALYSIS_PIPELINE_STEPS[0];
+  const progressPercent = Math.round((currentStep / ANALYSIS_PIPELINE_STEPS.length) * 100);
 
   return (
     <AnimatePresence>
       <div className={styles.backdrop}>
         <motion.div
           className={styles.modal}
-          initial={{ opacity: 0, scale: 0.95, y: 12 }}
+          initial={{ opacity: 0, scale: 0.96, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 12 }}
-          transition={{ duration: 0.25 }}
+          exit={{ opacity: 0, scale: 0.96, y: 10 }}
+          transition={{ duration: 0.2 }}
         >
           <div className={styles.header}>
             <div className={styles.headerTitle}>
               <div className={styles.iconWrap}>
-                <Dna className={styles.dnaIcon} size={24} />
+                <Dna className={styles.dnaIcon} size={22} />
               </div>
               <div>
-                <h3>GenomeAI Laboratory Pipeline</h3>
-                <span className={styles.sub}>AI-Supported DNA Analysis Execution</span>
+                <h3>GenomeAI CNN Analysis Pipeline</h3>
+                <span className={styles.sub}>Enterprise Genomic LIS Engine Execution</span>
               </div>
             </div>
             <div className={styles.badge}>{progressPercent}%</div>
@@ -47,25 +54,27 @@ export default function AnalysisProgressModal({ isOpen, currentStep, error }) {
             <div className={styles.progressBar} style={{ width: `${progressPercent}%` }} />
           </div>
 
+          {/* Active Step Highlight Card */}
           <div className={styles.activeStepCard}>
             {error ? (
               <div className={styles.errorContent}>
-                <h4>Analysis Encountered an Error</h4>
+                <h4>Analysis Encountered an Issue</h4>
                 <p>{error}</p>
               </div>
             ) : (
               <>
                 <div className={styles.stepHeader}>
-                  <Loader2 className={styles.spinner} size={20} />
-                  <h4>{currentStepObj.label}</h4>
+                  <Loader2 className={styles.spinner} size={18} />
+                  <h4>Step {currentStep}: {currentStepObj.label}</h4>
                 </div>
                 <p className={styles.stepDesc}>{currentStepObj.desc}</p>
               </>
             )}
           </div>
 
+          {/* Step Timeline */}
           <div className={styles.stepsList}>
-            {LAB_PIPELINE_STEPS.map((step) => {
+            {ANALYSIS_PIPELINE_STEPS.map((step) => {
               const isDone = currentStep > step.id;
               const isCurrent = currentStep === step.id;
 
@@ -76,9 +85,9 @@ export default function AnalysisProgressModal({ isOpen, currentStep, error }) {
                 >
                   <div className={styles.stepIcon}>
                     {isDone ? (
-                      <CheckCircle2 size={16} className={styles.checkIcon} />
+                      <CheckCircle2 size={15} className={styles.checkIcon} />
                     ) : isCurrent ? (
-                      <Loader2 size={16} className={styles.spinnerSmall} />
+                      <Loader2 size={15} className={styles.spinnerSmall} />
                     ) : (
                       <span className={styles.numDot}>{step.id}</span>
                     )}
@@ -89,9 +98,15 @@ export default function AnalysisProgressModal({ isOpen, currentStep, error }) {
             })}
           </div>
 
-          <div className={styles.footerNote}>
-            <ShieldCheck size={14} />
-            <span>GenomeAI Engine v2.0 • Validated CNN Laboratory Pipeline</span>
+          <div className={styles.footerRow}>
+            <div className={styles.timeEst}>
+              <Clock size={13} />
+              <span>Est. time remaining: <strong>~{estTime}s</strong></span>
+            </div>
+            <div className={styles.engineTag}>
+              <ShieldCheck size={13} />
+              <span>CNN Model v2.0</span>
+            </div>
           </div>
         </motion.div>
       </div>
