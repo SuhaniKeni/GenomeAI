@@ -853,6 +853,7 @@ def register_laboratory_and_admin(req: RegisterLabRequest, db: Session = Depends
 
     try:
         lab = Laboratory(
+            lab_code=req.lab_code,
             laboratory_name=req.lab_name,
             registration_number=req.lab_code,
             email=req.admin_email,

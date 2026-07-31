@@ -1,6 +1,6 @@
 # GenomeAI Enterprise LIS — Production Deployment Guide & CI/CD Manual
 
-This guide provides complete instructions for running, testing, and automatically deploying **GenomeAI** on [Render](https://render.com) using Continuous Deployment (CI/CD) via GitHub.
+This guide provides complete instructions for running, testing, and automatically deploying **GenomeAI** on [Render](https://render.com) using Continuous Deployment (CI/CD) via GitHub and [Supabase PostgreSQL](https://supabase.com) as the production cloud database.
 
 ---
 
@@ -9,7 +9,7 @@ This guide provides complete instructions for running, testing, and automaticall
 GenomeAI is deployed as a single, unified web application on Render. FastAPI acts as the primary web application server:
 - **Client Application**: Serves the compiled React 19 SPA (`frontend/dist`) directly at `https://genomeai.onrender.com`.
 - **API Services**: Serves REST endpoints under `/api/*` and `/health` from the same origin, eliminating CORS issues and multi-domain configurations.
-- **Database Engine**: Managed PostgreSQL Database connected via `DATABASE_URL`.
+- **Database Engine**: Serverless Supabase PostgreSQL Database connected via `DATABASE_URL`.
 
 ---
 
@@ -66,37 +66,45 @@ Local URLs:
 
 ---
 
-## ⚙️ 3. Initial Render Setup (Blueprints / Manual Web Service)
+## ⚡ 3. Supabase PostgreSQL Database Provisioning
+
+1. Log in to [Supabase Dashboard](https://supabase.com/dashboard).
+2. Click **New Project**.
+3. Name your project `GenomeAI-Production` and set your database password and cloud region.
+4. Copy your PostgreSQL connection string from **Project Settings → Database → Connection String**.
+   - Example format (Transaction Pooler): `postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres`
+   - Example format (Direct Connection): `postgresql://postgres:[password]@db.[ref].supabase.co:5432/postgres`
+   - *Note*: Both `postgresql://` and `postgres://` prefixes are automatically handled by GenomeAI.
+
+---
+
+## ⚙️ 4. Initial Render Setup (Blueprints / Manual Web Service)
 
 ### Method A: Render Blueprint (Recommended)
 1. Log in to [Render Dashboard](https://dashboard.render.com).
 2. Click **New +** → **Blueprint**.
 3. Connect your GitHub repository (`SuhaniKeni/GenomeAI`).
-4. Render will automatically detect `render.yaml` and provision:
-   - Web Service: `genomeai`
-   - Managed PostgreSQL Database: `genomeai-db`
-5. Click **Apply**.
+4. Render will detect `render.yaml` and prompt for required environment variables (`DATABASE_URL`).
+5. Paste your **Supabase PostgreSQL connection string** into the `DATABASE_URL` field.
+6. Click **Apply**.
 
 ### Method B: Manual Web Service Setup
-1. Create a **PostgreSQL Database** on Render:
-   - Name: `genomeai-db`
-   - Database: `genomeai`
-   - User: `genomeai_user`
+1. Provision your database on [Supabase.com](https://supabase.com) and copy your connection string.
 2. Create a **Web Service** on Render:
    - Environment: `Python`
    - Build Command: `./build.sh`
    - Start Command: `python -m uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
-   - Connect `DATABASE_URL` from `genomeai-db`.
+   - Under **Environment Variables**, set `DATABASE_URL` to your Supabase PostgreSQL connection string.
 
 ---
 
-## 🔐 4. Environment Variables Configuration
+## 🔐 5. Environment Variables Configuration
 
 The following environment variables should be configured on Render:
 
 | Variable Name | Example Value | Purpose |
 | :--- | :--- | :--- |
-| `DATABASE_URL` | `postgresql://user:pass@host:5432/genomeai` | PostgreSQL connection string |
+| `DATABASE_URL` | `postgresql://postgres.[ref]:[pass]@aws-0-[region].pooler.supabase.com:6543/postgres` | Supabase PostgreSQL connection string |
 | `GENOMEAI_SECRET_KEY` | `secure_random_string_here` | JWT Token signing key |
 | `ALLOWED_ORIGINS` | `*` | Allowed CORS origins |
 | `PYTHON_VERSION` | `3.11.9` | Python runtime version |

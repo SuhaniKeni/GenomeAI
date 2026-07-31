@@ -1,5 +1,5 @@
-# Render Infrastructure-as-Code Blueprint Configuration for GenomeAI (Free Tier Compatible)
-# Single-URL Web Application (React Frontend + FastAPI Backend) & PostgreSQL Database
+# Render Infrastructure-as-Code Blueprint Configuration for GenomeAI
+# Single-URL Web Application (React Frontend + FastAPI Backend) using Supabase PostgreSQL
 
 services:
   - type: web
@@ -12,9 +12,7 @@ services:
     autoDeploy: true
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: genomeai-db
-          property: connectionString
+        sync: false
       - key: GENOMEAI_SECRET_KEY
         generateValue: true
       - key: JWT_SECRET_KEY
@@ -26,8 +24,3 @@ services:
       - key: ALLOWED_ORIGINS
         value: "*"
 
-databases:
-  - name: genomeai-db
-    databaseName: genomeai
-    user: genomeai_user
-    plan: free

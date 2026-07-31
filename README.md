@@ -9,7 +9,8 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.2%2B-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org)
 [![TensorFlow](https://img.shields.io/badge/TensorFlow-2.16%2B-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)](https://tensorflow.org)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
-[![SQLite](https://img.shields.io/badge/SQLite-3.0%2B-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://sqlite.org)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%2B-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://postgresql.org)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
 <br/>
@@ -261,7 +262,7 @@ sequenceDiagram
 | **Deep Learning** | PyTorch 2.2+, TensorFlow 2.16+ | Foundation Transformer models & 1D-CNN / Bi-LSTM networks. |
 | **NLP & Transformers** | HuggingFace `transformers` | Pretrained `InstaDeepAI/nucleotide-transformer-v2-50m-multi-species`. |
 | **Bioinformatics** | PyFAIDX, Pandas, NumPy, Scikit-Learn | FASTA genome indexing, sequence slicing, & metrics evaluation. |
-| **Database** | SQLite 3 (`sqlite3`) | Thread-safe, zero-configuration local prediction history storage. |
+| **Database** | Supabase PostgreSQL / SQLAlchemy / Alembic | Serverless cloud PostgreSQL database (with SQLite local fallback). |
 | **Document Generation** | ReportLab 4.1+ | Dynamic vector PDF medical report generation. |
 | **Environment** | Python 3.10+, PowerShell, Git | Development runtime & version control. |
 

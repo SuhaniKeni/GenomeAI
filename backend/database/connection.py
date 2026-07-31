@@ -24,6 +24,10 @@ DEFAULT_SQLITE_URL = f"sqlite:///{DB_DIR / 'genomeai_lis.db'}"
 
 DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_POSTGRES_URL)
 
+# Normalize postgres:// scheme to postgresql:// for SQLAlchemy 1.4+ / 2.0 (common in Neon PostgreSQL URLs)
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 # Configure SQLAlchemy engine depending on PostgreSQL vs SQLite driver
 is_sqlite = DATABASE_URL.startswith("sqlite")
 connect_args = {"check_same_thread": False} if is_sqlite else {}
@@ -40,7 +44,7 @@ try:
             pool_size=10,
             max_overflow=20,
             pool_pre_ping=True,
-            pool_recycle=3600,
+            pool_recycle=300,
         )
         # Test connection
         with engine.connect() as conn:
