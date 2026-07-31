@@ -20,6 +20,7 @@ cd ..
 
 # 3. Execute Alembic Database Migrations
 echo "[3/3] Executing PostgreSQL Database Migrations..."
+export PYTHONPATH="${PYTHONPATH}:."
 alembic upgrade head
 
 echo "=========================================="

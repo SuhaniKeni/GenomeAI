@@ -1,8 +1,16 @@
 from logging.config import fileConfig
 import os
+import sys
+from pathlib import Path
+
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context
+
+# Ensure project root directory is in sys.path so 'backend' package is importable
+BASE_DIR = Path(__file__).resolve().parents[3]
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
 
 from backend.database.connection import Base, DATABASE_URL
 from backend.database import models  # noqa
@@ -15,7 +23,7 @@ if config.config_file_name:
 target_metadata = Base.metadata
 
 def run_migrations_offline() -> None:
-    url = os.getenv("DATABASE_URL", config.get_main_option("sqlalchemy.url"))
+    url = os.getenv("DATABASE_URL", DATABASE_URL)
     if url.startswith("postgres://"):
         url = url.replace("postgres://", "postgresql://", 1)
     context.configure(
@@ -30,7 +38,7 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    url = os.getenv("DATABASE_URL", config.get_main_option("sqlalchemy.url"))
+    url = os.getenv("DATABASE_URL", DATABASE_URL)
     if url.startswith("postgres://"):
         url = url.replace("postgres://", "postgresql://", 1)
     configuration = config.get_section(config.config_ini_section) or {}
