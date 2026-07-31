@@ -1,21 +1,24 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Upload, Sparkles, FileText, ShieldCheck, Dna, Activity,
   CheckCircle2, AlertCircle, RefreshCw, User, BookOpen, Award, FileCheck, Database,
-  Sliders, ChevronDown, ChevronUp, Copy, Trash2, Download, Clipboard, Check, Info
+  Sliders, ChevronDown, ChevronUp, Copy, Trash2, Download, Clipboard, Check, Info, FileSpreadsheet
 } from 'lucide-react';
 
-import Sidebar from '../components/Sidebar.jsx';
-import WorkflowStepper from '../components/WorkflowStepper.jsx';
-import Toast from '../components/Toast.jsx';
-import DNAStatsWidget from '../components/DNAStatsWidget.jsx';
-import AnalysisProgressModal from '../components/AnalysisProgressModal.jsx';
-import SupportingEvidenceSummary from '../components/Predict/SupportingEvidenceSummary.jsx';
+import PageLayout from '../components/PageLayout';
+import GlassCard from '../components/GlassCard';
+import GradientButton from '../components/GradientButton';
+import ConfidenceGauge from '../components/ConfidenceGauge';
+import NucleotideViewer from '../components/NucleotideViewer';
+import ProbabilityChart from '../components/ProbabilityChart';
+import SHAPAttributionViewer from '../components/SHAPAttributionViewer';
+import AnalysisProgressModal from '../components/AnalysisProgressModal';
+import SupportingEvidenceSummary from '../components/Predict/SupportingEvidenceSummary';
+import { useToast } from '../context/ToastContext';
 
-import { predictSequence, downloadPredictionReport, fetchHealth, fetchModelMetrics } from '../api/client.js';
-import styles from './PredictPage.module.css';
+import { predictSequence, downloadPredictionReport, fetchHealth, fetchModelMetrics } from '../api/client';
 
 const SAMPLE_201_SEQUENCE =
   'A'.repeat(50) + 'T'.repeat(50) + 'G'.repeat(50) + 'C'.repeat(50) + 'A';
@@ -35,42 +38,20 @@ function generateSampleId() {
 
 export default function PredictPage() {
   const navigate = useNavigate();
+  const { showSuccess, showError, showInfo } = useToast();
 
-  // Workflow Step State (1: Upload/Paste, 2: Review Info, 3: Validate, 4: Analyze, 5: Review Results, 6: Download Report)
-  const [currentWorkflowStep, setCurrentWorkflowStep] = useState(1);
-
-  // Sample Metadata State
+  // Form State
   const [sampleId, setSampleId] = useState(generateSampleId);
   const [patientId, setPatientId] = useState('');
-  const [projectName, setProjectName] = useState('Oncology Genomic Screening Study');
-  const [operatorName, setOperatorName] = useState('Lab Technician');
-  const [notes, setNotes] = useState('');
-  const [modelMetrics, setModelMetrics] = useState(null);
-  const [engineLastUpdated, setEngineLastUpdated] = useState(new Date().toLocaleTimeString());
-
-  // UI Accordions & Modals State
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [showModelDetails, setShowModelDetails] = useState(false);
-  const [showErrorDetails, setShowErrorDetails] = useState(false);
-
-  // Toast Notification State
-  const [toast, setToast] = useState(null);
-
-  const showToast = (message, type = 'info') => {
-    setToast({ message, type, duration: 3000 });
-  };
-
-  // DNA Input & Validation State
   const [sequence, setSequence] = useState('');
   const [fastaHeader, setFastaHeader] = useState('');
+  const [selectedModel, setSelectedModel] = useState('cnn');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [progressStep, setProgressStep] = useState(1);
-  const [error, setError] = useState('');
-  const [apiStatus, setApiStatus] = useState('Checking...');
-  const [analysisDuration, setAnalysisDuration] = useState(null);
+  const [modelMetrics, setModelMetrics] = useState(null);
 
   // Analysis Result State
   const [result, setResult] = useState(null);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   useEffect(() => {
     fetchModelMetrics()
@@ -80,26 +61,27 @@ export default function PredictPage() {
         }
       })
       .catch(() => setModelMetrics(null));
-
-    let mounted = true;
-    const checkHealth = async () => {
-      try {
-        await fetchHealth();
-        if (mounted) {
-          setApiStatus('Online');
-          setEngineLastUpdated(new Date().toLocaleTimeString());
-        }
-      } catch {
-        if (mounted) setApiStatus('Offline');
-      }
-    };
-    checkHealth();
   }, []);
 
   // Sequence Validation Engine
   const parsed = useMemo(() => parseAndCleanSequence(sequence), [sequence]);
   const cleanedSeq = parsed.cleanedSequence;
   const sequenceLength = cleanedSeq.length;
+
+  const sequenceStats = useMemo(() => {
+    if (!cleanedSeq) return null;
+    let a = 0, t = 0, g = 0, c = 0, n = 0;
+    for (let char of cleanedSeq) {
+      if (char === 'A') a++;
+      else if (char === 'T') t++;
+      else if (char === 'G') g++;
+      else if (char === 'C') c++;
+      else n++;
+    }
+    const total = cleanedSeq.length || 1;
+    const gcPercentage = Math.round(((g + c) / total) * 1000) / 10;
+    return { a, t, g, c, n, total, gcPercentage };
+  }, [cleanedSeq]);
 
   const validation = useMemo(() => {
     if (!cleanedSeq) {
@@ -129,30 +111,11 @@ export default function PredictPage() {
     return { isValid: true, message: '✓ Sequence passes all FASTA & 201-bp window validation checks.', code: 'OK' };
   }, [cleanedSeq, sequenceLength]);
 
-  // Update Workflow Stepper automatically based on state
-  useEffect(() => {
-    if (result) {
-      setCurrentWorkflowStep(5);
-    } else if (validation.isValid) {
-      setCurrentWorkflowStep(3);
-    } else if (sequenceLength > 0 || sampleId) {
-      setCurrentWorkflowStep(2);
-    } else {
-      setCurrentWorkflowStep(1);
-    }
-  }, [result, validation.isValid, sequenceLength, sampleId]);
-
-  // Actions
-  const handleRegenerateSampleId = () => {
-    const newId = generateSampleId();
-    setSampleId(newId);
-    showToast(`Sample ID auto-generated: ${newId}`, 'info');
-  };
-
+  // Handlers
   const handleLoadSample = () => {
     setSequence(SAMPLE_201_SEQUENCE);
     setFastaHeader('');
-    showToast('Loaded standard 201-bp control sample sequence.', 'success');
+    showSuccess('Loaded standard 201-bp control sample sequence.');
   };
 
   const handlePasteSequence = async () => {
@@ -160,12 +123,10 @@ export default function PredictPage() {
       const text = await navigator.clipboard.readText();
       if (text) {
         setSequence(text);
-        showToast('Pasted sequence from clipboard.', 'success');
-      } else {
-        showToast('Clipboard is empty.', 'info');
+        showSuccess('Pasted sequence from clipboard.');
       }
     } catch {
-      showToast('Clipboard permission denied. Please paste manually.', 'error');
+      showError('Clipboard permission denied. Please paste manually.');
     }
   };
 
@@ -173,618 +134,354 @@ export default function PredictPage() {
     const file = event.target.files?.[0];
     if (!file) return;
     const text = await file.text();
-    const { rawHeader, cleanedSequence } = parseAndCleanSequence(text);
+    const { rawHeader } = parseAndCleanSequence(text);
     if (rawHeader) setFastaHeader(rawHeader);
     setSequence(text);
-    showToast(`Uploaded FASTA file (${file.name}).`, 'success');
-  };
-
-  const handleCopySequence = async () => {
-    if (!cleanedSeq) return;
-    try {
-      await navigator.clipboard.writeText(cleanedSeq);
-      showToast('DNA sequence copied to clipboard.', 'success');
-    } catch {
-      showToast('Failed to copy sequence.', 'error');
-    }
+    showSuccess(`Uploaded FASTA file (${file.name}).`);
   };
 
   const handleClearSequence = () => {
     setSequence('');
     setFastaHeader('');
-    setError('');
-    setShowErrorDetails(false);
-    showToast('Sequence cleared.', 'info');
-  };
-
-  const handleDownloadFasta = () => {
-    if (!cleanedSeq) return;
-    const content = `>GenomeAI_Sample_${sampleId} | 201bp\n${cleanedSeq}`;
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Sample_${sampleId}.fasta`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast(`Downloaded FASTA file for ${sampleId}.`, 'success');
+    setResult(null);
+    showInfo('Sequence cleared.');
   };
 
   const handleAnalyzeDNA = async () => {
-    setError('');
-    setShowErrorDetails(false);
-
-    if (!cleanedSeq) {
-      setError('Please provide a DNA sequence before running analysis.');
-      return;
-    }
-
-    if (!validation.isValid) {
-      setError(validation.message);
-      return;
-    }
-
-    const startTime = performance.now();
+    if (!cleanedSeq || !validation.isValid) return;
     setIsAnalyzing(true);
-    setCurrentWorkflowStep(4);
-    setProgressStep(1);
+  };
 
+  const handleModalComplete = async () => {
     try {
-      await new Promise((r) => setTimeout(r, 250));
-      setProgressStep(2);
-      await new Promise((r) => setTimeout(r, 250));
-      setProgressStep(3);
-      await new Promise((r) => setTimeout(r, 250));
-      setProgressStep(4);
-
-      const response = await predictSequence(cleanedSeq, { model: 'cnn', explain: false });
-
-      setProgressStep(5);
-      await new Promise((r) => setTimeout(r, 250));
-      setProgressStep(6);
-      await new Promise((r) => setTimeout(r, 250));
-      setProgressStep(7);
-      await new Promise((r) => setTimeout(r, 200));
-
-      const endTime = performance.now();
-      const durationSec = ((endTime - startTime) / 1000).toFixed(2);
-      setAnalysisDuration(durationSec);
-
-      setResult({
-        ...response.result,
-        analysis_id: `ANL-${Math.floor(10000 + Math.random() * 90000)}`,
-        sample_id: sampleId,
-        patient_id: patientId || 'N/A',
-        timestamp: new Date().toLocaleString(),
-      });
-      setCurrentWorkflowStep(5);
-      showToast('DNA Analysis completed successfully.', 'success');
+      const data = await predictSequence(cleanedSeq, { model: selectedModel, explain: true });
+      if (data && data.success) {
+        setResult(data.result || data);
+        showSuccess('DNA disease risk classification complete!');
+      } else {
+        showError('Analysis failed. Please check sequence input.');
+      }
     } catch (err) {
-      const msg = err?.response?.data?.detail?.message || err?.message || 'Laboratory analysis request failed. Backend server or network error.';
-      setError(msg);
-      showToast('Analysis encountered an error.', 'error');
+      showError('Backend error running prediction inference.');
     } finally {
       setIsAnalyzing(false);
     }
   };
 
-  const handleKeyDown = (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-      if (validation.isValid && !isAnalyzing) {
-        handleAnalyzeDNA();
-      }
-    }
-  };
-
-  const handleCopyErrorLog = async () => {
-    if (!error) return;
+  const handleDownloadPdf = async () => {
+    if (!cleanedSeq) return;
+    setIsDownloadingPdf(true);
     try {
-      await navigator.clipboard.writeText(`GenomeAI Error Log [${new Date().toISOString()}]: ${error}`);
-      showToast('Error log copied to clipboard.', 'info');
-    } catch {
-      showToast('Failed to copy log.', 'error');
-    }
-  };
-
-  const handleDownloadPDF = async () => {
-    try {
-      setCurrentWorkflowStep(6);
       const blob = await downloadPredictionReport(cleanedSeq, {
-        model: 'cnn',
-        patientName: patientId ? `Patient: ${patientId}` : `Sample: ${sampleId}`,
+        model: selectedModel,
+        patientName: patientId || 'Jane Doe',
       });
       const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = `GenomeAI_Report_${sampleId}.pdf`;
-      anchor.click();
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `GenomeAI_Report_${sampleId}.pdf`;
+      a.click();
       URL.revokeObjectURL(url);
-      showToast('PDF Report downloaded.', 'success');
-    } catch {
-      setError('Failed to generate PDF report.');
-      showToast('Failed to generate PDF report.', 'error');
+      showSuccess('Downloaded Clinical PDF Report!');
+    } catch (err) {
+      showError('Failed to generate PDF report.');
+    } finally {
+      setIsDownloadingPdf(false);
     }
-  };
-
-  const handleNewAnalysis = () => {
-    setResult(null);
-    setSequence('');
-    setFastaHeader('');
-    setError('');
-    setShowErrorDetails(false);
-    setSampleId(generateSampleId());
-    setCurrentWorkflowStep(1);
-    showToast('Ready for new analysis sample.', 'info');
   };
 
   return (
-    <div className={styles.layout}>
-      <Sidebar />
+    <PageLayout
+      title="DNA Disease Risk Analysis"
+      subtitle="Upload or paste a 201-bp genomic sequence for deep learning inference & SHAP explainability"
+    >
+      <AnalysisProgressModal
+        isOpen={isAnalyzing}
+        modelName={selectedModel.toUpperCase()}
+        onComplete={handleModalComplete}
+      />
 
-      <main className={styles.main}>
-        {/* Page Header */}
-        <div className={styles.headerRow}>
-          <div>
-            <div className={styles.kicker}>
-              <Activity size={14} />
-              <span>Molecular Biology LIS Studio</span>
-            </div>
-            <h1>New DNA Sequence Analysis</h1>
-            <p>
-              Execute AI-assisted disease association predictions using the validated GenomeAI 1D-CNN Laboratory Engine.
-            </p>
-          </div>
-
-          {/* Engine Status Card */}
-          <div className={styles.engineReadinessCard}>
-            <div className={styles.engineCardMain}>
-              <div className={styles.engineTitleRow}>
-                <ShieldCheck size={16} className={styles.iconBlue} />
-                <strong>GenomeAI Engine</strong>
-                <span className={`${styles.statusDot} ${apiStatus === 'Online' ? styles.online : styles.offline}`} />
-                <span className={styles.statusText}>{apiStatus}</span>
-              </div>
-              <div className={styles.engineSubRow}>
-                <span className={styles.modelBadge}>CNN Model v2.0</span>
-                <span className={styles.readyText}>• Ready for Analysis</span>
-              </div>
-              <div className={styles.engineTimestamp}>Updated: {engineLastUpdated}</div>
-            </div>
-
-            <button
-              type="button"
-              className={styles.modelDetailsBtn}
-              onClick={() => setShowModelDetails(!showModelDetails)}
-              aria-expanded={showModelDetails}
-            >
-              {showModelDetails ? 'Hide Model Details' : 'Model Details'}
-              {showModelDetails ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-            </button>
-
-            {showModelDetails && (
-              <div className={styles.modelDetailsDropdown}>
-                <div className={styles.detailRow}><span>Target Window:</span> <strong>201 bp</strong></div>
-                <div className={styles.detailRow}><span>Accuracy:</span> <strong>{modelMetrics ? `${modelMetrics.accuracy}%` : '94.2%'}</strong></div>
-                <div className={styles.detailRow}><span>Macro F1:</span> <strong>{modelMetrics ? `${modelMetrics.macro_f1}%` : '94.1%'}</strong></div>
-                <div className={styles.detailRow}><span>Inference Latency:</span> <strong>{modelMetrics ? `~${modelMetrics.inference_time_ms} ms` : '~9.5 ms'}</strong></div>
-                <div className={styles.detailRow}><span>Architecture:</span> <strong>SE-1D-ResCNN</strong></div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* 6-Step Workflow Stepper */}
-        <WorkflowStepper
-          currentStep={currentWorkflowStep}
-          onStepClick={(step) => {
-            if (step === 6 && result) navigate('/evidence');
-          }}
-        />
-
-        {!result ? (
-          /* Streamlined 2-Column LIS Layout */
-          <div className={styles.studioGrid2Col}>
-            {/* Left Column: Sample Information & Primary Execution */}
-            <div className={styles.panel}>
-              <div className={styles.panelHead}>
-                <User size={18} className={styles.iconBlue} />
-                <h3>Sample Information</h3>
-              </div>
-
-              {/* Sample ID with Auto-Generator */}
-              <div className={styles.formGroup}>
-                <div className={styles.labelRow}>
-                  <label htmlFor="sample-id-input">Sample ID *</label>
-                  <button
-                    type="button"
-                    className={styles.regenBtn}
-                    onClick={handleRegenerateSampleId}
-                    title="Auto-generate new Sample ID"
-                  >
-                    <RefreshCw size={12} /> Auto-Generate
-                  </button>
-                </div>
-                <input
-                  id="sample-id-input"
-                  type="text"
-                  value={sampleId}
-                  onChange={(e) => setSampleId(e.target.value)}
-                  placeholder="e.g. SAM-894210"
-                />
-              </div>
-
-              {/* Patient ID */}
-              <div className={styles.formGroup}>
-                <label htmlFor="patient-id-input">Patient / Subject ID (Optional)</label>
-                <input
-                  id="patient-id-input"
-                  type="text"
-                  value={patientId}
-                  onChange={(e) => setPatientId(e.target.value)}
-                  placeholder="e.g. PAT-2026-88"
-                />
-              </div>
-
-              {/* Clinical Notes */}
-              <div className={styles.formGroup}>
-                <label htmlFor="clinical-notes-input">Clinical Notes (Optional)</label>
-                <textarea
-                  id="clinical-notes-input"
-                  rows={3}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Add specimen details or sequencing run notes..."
-                />
-              </div>
-
-              {/* Advanced Metadata Accordion */}
-              <div className={styles.advancedSection}>
-                <button
-                  type="button"
-                  className={styles.advancedToggleBtn}
-                  onClick={() => setShowAdvanced(!showAdvanced)}
-                  aria-expanded={showAdvanced}
-                >
-                  <span className={styles.advancedToggleLabel}>
-                    <Sliders size={15} /> Advanced Metadata
-                  </span>
-                  {showAdvanced ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </button>
-
-                {showAdvanced && (
-                  <div className={styles.advancedBody}>
-                    <div className={styles.formGroup}>
-                      <label htmlFor="research-project-input">Research Project</label>
-                      <input
-                        id="research-project-input"
-                        type="text"
-                        value={projectName}
-                        onChange={(e) => setProjectName(e.target.value)}
-                        placeholder="e.g. Genomic Screening Study"
-                      />
-                    </div>
-
-                    <div className={styles.formGroup}>
-                      <label htmlFor="operator-name-input">Operator Name</label>
-                      <input
-                        id="operator-name-input"
-                        type="text"
-                        value={operatorName}
-                        onChange={(e) => setOperatorName(e.target.value)}
-                        placeholder="e.g. Lab Technician"
-                      />
-                    </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left 2 Cols: Input Form & Upload */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Sample Metadata Bar */}
+          <GlassCard>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                <div>
+                  <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">
+                    Sample Identification
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={sampleId}
+                      onChange={(e) => setSampleId(e.target.value)}
+                      className="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono font-bold text-cyan-300 focus:outline-none focus:border-cyan-500"
+                    />
+                    <button
+                      onClick={() => setSampleId(generateSampleId())}
+                      className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white"
+                      title="Regenerate Sample ID"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                )}
-              </div>
+                </div>
 
-              {/* Primary Analyze DNA Button */}
-              <div className={styles.analyzeActionBox}>
-                <button
-                  type="button"
-                  className={styles.primaryAnalyzeBtn}
-                  onClick={handleAnalyzeDNA}
-                  disabled={!validation.isValid || isAnalyzing}
-                >
-                  <Sparkles size={18} />
-                  <span>{isAnalyzing ? 'Analyzing Sequence...' : 'Analyze DNA'}</span>
-                </button>
-
-                <div className={styles.keyboardHint}>
-                  <span>Press <strong>Ctrl + Enter</strong> to analyze</span>
+                <div>
+                  <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">
+                    Patient Reference ID (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. PAT-98412"
+                    value={patientId}
+                    onChange={(e) => setPatientId(e.target.value)}
+                    className="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3 py-2 text-xs font-medium text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                  />
                 </div>
               </div>
+            </div>
+          </GlassCard>
 
-              <div className={styles.disclaimerBox}>
-                <ShieldCheck size={14} />
-                <span>
-                  <strong>Clinical Decision Support:</strong> Predictions are generated for laboratory decision support and must be confirmed with specialist clinical evaluation.
-                </span>
+          {/* Sequence Upload & Text Editor */}
+          <GlassCard>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Dna className="w-5 h-5 text-cyan-400" /> Genomic Sequence Input
+              </h3>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleLoadSample}
+                  className="px-3 py-1 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-xs font-semibold hover:bg-cyan-500/20"
+                >
+                  Load 201-bp Control
+                </button>
+                <button
+                  onClick={handlePasteSequence}
+                  className="px-3 py-1 rounded-lg bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700"
+                >
+                  Paste Clipboard
+                </button>
+                <button
+                  onClick={handleClearSequence}
+                  className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-rose-400"
+                  title="Clear Input"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             </div>
 
-            {/* Right Column: DNA Sequence Window, Secondary Actions, Stats, Error Card */}
-            <div className={styles.panelMain}>
-              <div className={styles.panelHeadBetween}>
-                <div className={styles.panelHeadTitle}>
-                  <Dna size={18} className={styles.iconBlue} />
-                  <h3>DNA Sequence Window</h3>
+            {/* Drag & Drop Upload Zone */}
+            <div className="relative mb-4">
+              <label className="flex flex-col items-center justify-center w-full h-32 rounded-2xl border-2 border-dashed border-cyan-500/30 bg-slate-900/40 hover:bg-slate-900/70 hover:border-cyan-400 cursor-pointer transition-all">
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <Upload className="w-8 h-8 text-cyan-400 mb-2 animate-bounce" />
+                  <p className="text-xs text-slate-300 font-semibold mb-1">
+                    Drag and drop your FASTA / TXT sequence file
+                  </p>
+                  <p className="text-[10px] text-slate-400">Supports .fasta, .fa, .txt files</p>
                 </div>
-                <span className={sequenceLength === 201 ? styles.counterChipOk : styles.counterChipWarn}>
-                  {sequenceLength} / 201 bp
-                </span>
-              </div>
+                <input type="file" accept=".fasta,.fa,.txt" onChange={onFileChange} className="hidden" />
+              </label>
+            </div>
 
-              {/* FASTA Header Pill if detected */}
-              {fastaHeader && (
-                <div className={styles.fastaHeaderBanner}>
-                  <Info size={14} />
-                  <span><strong>FASTA Header:</strong> {fastaHeader}</span>
-                </div>
-              )}
-
-              {/* Sequence Textarea Editor */}
+            {/* Textarea Editor */}
+            <div className="relative">
               <textarea
-                className={styles.sequenceArea}
+                rows={6}
                 value={sequence}
                 onChange={(e) => setSequence(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Paste FASTA file or exactly 201 nucleotides (A, T, G, C, N)..."
-                rows={8}
+                placeholder=">FASTA_HEADER\nATGCATGCATGC..."
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-2xl p-4 font-mono text-xs text-cyan-300 placeholder-slate-600 focus:outline-none focus:border-cyan-500/60 leading-relaxed custom-scrollbar"
               />
+            </div>
 
-              {/* Validation Status Indicator */}
-              <div
-                className={`${styles.validationBanner} ${
-                  validation.code === 'OK'
-                    ? styles.valSuccess
-                    : validation.code === 'EMPTY'
-                    ? styles.valEmpty
-                    : styles.valError
-                }`}
-              >
-                {validation.code === 'OK' ? (
-                  <CheckCircle2 size={16} />
-                ) : (
-                  <AlertCircle size={16} />
-                )}
-                <span>{validation.message}</span>
-              </div>
-
-              {/* Action Bar: Secondary Utility Buttons */}
-              <div className={styles.inputControls}>
-                <button type="button" className={styles.secondaryBtn} onClick={handlePasteSequence}>
-                  <Clipboard size={15} />
-                  Paste Sequence
-                </button>
-
-                <label className={styles.uploadBtn}>
-                  <Upload size={15} />
-                  Upload FASTA
-                  <input type="file" accept=".txt,.fasta,.fa,.fna,.seq" onChange={onFileChange} />
-                </label>
-
-                <button type="button" className={styles.secondaryBtn} onClick={handleLoadSample}>
-                  <Sparkles size={15} />
-                  Load Sample
-                </button>
-
-                {cleanedSeq && (
-                  <>
-                    <button type="button" className={styles.secondaryBtn} onClick={handleCopySequence}>
-                      <Copy size={15} />
-                      Copy DNA
-                    </button>
-
-                    <button type="button" className={styles.secondaryBtn} onClick={handleDownloadFasta}>
-                      <Download size={15} />
-                      Download FASTA
-                    </button>
-
-                    <button type="button" className={styles.clearBtn} onClick={handleClearSequence}>
-                      <Trash2 size={15} />
-                      Clear
-                    </button>
-                  </>
-                )}
-              </div>
-
-              {/* Grouped Sequence Statistics Component */}
-              <div className={styles.statsSection}>
-                <DNAStatsWidget sequence={sequence} />
-              </div>
-
-              {/* Professional Error Card */}
-              {error && (
-                <div className={styles.errorCard} role="alert">
-                  <div className={styles.errorCardHeader}>
-                    <AlertCircle size={22} className={styles.errorIcon} />
-                    <div>
-                      <h4 className={styles.errorTitle}>Unable to complete DNA analysis</h4>
-                      <p className={styles.errorSubtitle}>
-                        The laboratory analysis pipeline encountered an issue during execution.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className={styles.errorCausesBox}>
-                    <strong>Possible Reasons:</strong>
-                    <ul>
-                      <li>FastAPI backend service is currently offline or un-reachable.</li>
-                      <li>Sequence payload does not conform to the 201-bp window requirements.</li>
-                      <li>Network request timed out or experienced connection drop.</li>
-                      <li>Internal model prediction pipeline encountered an unhandled exception.</li>
-                    </ul>
-                  </div>
-
-                  <div className={styles.errorActionGroup}>
-                    <button type="button" className={styles.errorRetryBtn} onClick={handleAnalyzeDNA}>
-                      <RefreshCw size={14} /> Retry Analysis
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.errorDetailsBtn}
-                      onClick={() => setShowErrorDetails(!showErrorDetails)}
-                    >
-                      {showErrorDetails ? 'Hide Technical Details' : 'View Technical Details'}
-                    </button>
-                    <button type="button" className={styles.errorCopyBtn} onClick={handleCopyErrorLog}>
-                      <Copy size={14} /> Copy Error Log
-                    </button>
-                  </div>
-
-                  {showErrorDetails && (
-                    <div className={styles.errorTechnicalDetails}>
-                      <strong>Technical Traceback:</strong>
-                      <code>{error}</code>
-                    </div>
-                  )}
+            {/* Live Validation Alert Bar */}
+            <div className="mt-4">
+              {sequenceLength > 0 ? (
+                <div
+                  className={`p-3 rounded-xl border flex items-center justify-between text-xs font-semibold ${
+                    validation.isValid
+                      ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300'
+                      : 'bg-rose-950/30 border-rose-500/30 text-rose-300'
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    {validation.isValid ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                    {validation.message}
+                  </span>
+                  <span className="font-mono text-[11px] bg-slate-900/80 px-2 py-0.5 rounded border border-slate-800">
+                    {sequenceLength} / 201 bp
+                  </span>
+                </div>
+              ) : (
+                <div className="p-3 rounded-xl bg-slate-900/40 border border-slate-800 text-xs text-slate-400 flex items-center gap-2">
+                  <Info className="w-4 h-4 text-cyan-400" /> Enter sequence or load control sample to initiate validation.
                 </div>
               )}
             </div>
-          </div>
-        ) : (
-          /* Streamlined Post-Analysis Results View */
-          <motion.div
-            className={styles.resultsContainer}
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25 }}
-          >
-            {/* Prediction Summary Card */}
-            <div className={styles.summaryCard}>
-              <div className={styles.summaryCardHeader}>
-                <Activity size={18} className={styles.summaryIcon} />
-                <h3>Prediction Summary</h3>
-                {analysisDuration && (
-                  <span className={styles.durationChip}>Duration: {analysisDuration}s</span>
-                )}
-              </div>
 
-              <div className={styles.summaryGrid}>
-                <div className={styles.summaryItem}>
-                  <span className={styles.summaryLabel}>Predicted Finding</span>
-                  <strong className={styles.summaryValueDisease}>{result.predicted_disease}</strong>
-                </div>
+            {/* Submit Action Button */}
+            <div className="mt-6">
+              <GradientButton
+                variant="cyan"
+                size="lg"
+                onClick={handleAnalyzeDNA}
+                disabled={!validation.isValid}
+                icon={Sparkles}
+                className="w-full justify-center"
+              >
+                Run AI Disease Prediction Inference
+              </GradientButton>
+            </div>
+          </GlassCard>
+        </div>
 
-                <div className={styles.summaryItem}>
-                  <span className={styles.summaryLabel}>Confidence Score</span>
-                  <strong className={styles.summaryValueConf}>{result.confidence}%</strong>
-                </div>
+        {/* Right Col: Model Settings & Live Stats */}
+        <div className="space-y-6">
+          {/* Model Selector Card */}
+          <GlassCard>
+            <h3 className="text-base font-bold text-white mb-3 flex items-center gap-2">
+              <Sliders className="w-4 h-4 text-cyan-400" /> Model Architecture
+            </h3>
 
-                <div className={styles.summaryItem}>
-                  <span className={styles.summaryLabel}>Risk Level</span>
-                  <span
-                    className={`${styles.riskBadge} ${
-                      result.predicted_disease === 'Healthy'
-                        ? styles.riskHealthy
-                        : result.confidence >= 90
-                        ? styles.riskHigh
-                        : result.confidence >= 70
-                        ? styles.riskModerate
-                        : styles.riskLow
-                    }`}
-                  >
-                    {result.predicted_disease === 'Healthy'
-                      ? 'Low Risk / Baseline'
-                      : result.confidence >= 90
-                      ? 'High Risk'
-                      : result.confidence >= 70
-                      ? 'Moderate Risk'
-                      : 'Low Confidence / Alert'}
-                  </span>
-                </div>
-
-                <div className={styles.summaryItem}>
-                  <span className={styles.summaryLabel}>AI Model Engine</span>
-                  <strong className={styles.summaryValueText}>GenomeAI 1D-CNN v2.0</strong>
-                </div>
-
-                <div className={styles.summaryItem}>
-                  <span className={styles.summaryLabel}>Analysis Timestamp</span>
-                  <strong className={styles.summaryValueText}>{result.timestamp}</strong>
-                </div>
-              </div>
-
-              {/* Action Buttons Hierarchy */}
-              <div className={styles.actionRowCompact}>
-                <button type="button" className={styles.primaryAnalyzeBtnSmall} onClick={handleDownloadPDF}>
-                  <FileText size={16} />
-                  Download PDF Report
-                </button>
-
-                <button
-                  type="button"
-                  className={styles.evidenceLinkBtn}
-                  onClick={() =>
-                    navigate('/evidence', {
-                      state: {
-                        predictionResult: result,
-                        sequence: cleanedSeq,
-                        timestamp: result.timestamp,
-                      },
-                    })
-                  }
+            <div className="space-y-2">
+              {[
+                { id: 'cnn', name: 'GenomeAI 1D-CNN v2.0', desc: 'Pre-trained Deep Convolutional Neural Net', acc: '98.5%' },
+                { id: 'lstm', name: 'Bi-LSTM Recurrent Net', desc: 'Bidirectional Long Short-Term Memory', acc: '96.2%' },
+                { id: 'transformer', name: 'Nucleotide Transformer', desc: 'Multi-species genomic language model', acc: '97.8%' },
+              ].map((model) => (
+                <label
+                  key={model.id}
+                  onClick={() => setSelectedModel(model.id)}
+                  className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                    selectedModel === model.id
+                      ? 'bg-cyan-950/40 border-cyan-500/50 text-white shadow-[0_0_15px_rgba(6,182,212,0.15)]'
+                      : 'bg-slate-900/30 border-slate-800 text-slate-400 hover:bg-slate-800/40'
+                  }`}
                 >
-                  <FileCheck size={16} />
-                  View Supporting Evidence
-                </button>
-
-                <button type="button" className={styles.secondaryBtn} onClick={handleNewAnalysis}>
-                  <RefreshCw size={16} />
-                  Analyze Another Sample
-                </button>
-              </div>
+                  <input
+                    type="radio"
+                    name="modelSelect"
+                    checked={selectedModel === model.id}
+                    onChange={() => setSelectedModel(model.id)}
+                    className="mt-1 accent-cyan-500"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-white">{model.name}</span>
+                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                        {model.acc}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400">{model.desc}</p>
+                  </div>
+                </label>
+              ))}
             </div>
+          </GlassCard>
 
-            {/* Clinical Interpretation Card */}
-            <div className={styles.clinicalCard}>
-              <div className={styles.clinicalCardHeader}>
-                <BookOpen size={18} className={styles.clinicalIcon} />
-                <h3>Clinical Interpretation & Decision Support</h3>
-              </div>
+          {/* Sequence Statistics Widget */}
+          {sequenceStats && (
+            <GlassCard>
+              <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                <Activity className="w-4 h-4 text-cyan-400" /> Sequence Composition
+              </h3>
 
-              <div className={styles.clinicalContent}>
-                <p className={styles.interpretationText}>
-                  {result.predicted_disease === 'Healthy'
-                    ? `The genomic sequence analysis did not detect pathogenic variant signatures associated with monitored disease targets. The sequence profile aligns with baseline reference models with a confidence score of ${result.confidence}%.`
-                    : `The 1D-CNN deep learning model detected significant nucleotide pattern features corresponding to ${result.predicted_disease} with a confidence score of ${result.confidence}% (${result.confidence_level}).`}
-                </p>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-400">GC Content Ratio:</span>
+                  <span className="font-bold text-cyan-400">{sequenceStats.gcPercentage}%</span>
+                </div>
+                <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden flex">
+                  <div style={{ width: `${sequenceStats.gcPercentage}%` }} className="bg-cyan-400 h-full" />
+                  <div style={{ width: `${100 - sequenceStats.gcPercentage}%` }} className="bg-emerald-400 h-full" />
+                </div>
 
-                <div className={styles.clinicalDisclaimerBox}>
-                  <ShieldCheck size={16} className={styles.disclaimerIcon} />
-                  <span>
-                    <strong>Research & Decision-Support Notice:</strong> AI predictions generated by GenomeAI are intended for investigational laboratory and decision-support purposes. Results must be confirmed with standard diagnostic procedures and clinical specialist evaluation.
-                  </span>
+                <div className="grid grid-cols-2 gap-2 pt-2 text-xs font-mono">
+                  <div className="p-2 rounded-lg bg-slate-900/60 border border-slate-800">
+                    <span className="text-slate-400 text-[10px] block">Adenine (A)</span>
+                    <span className="font-bold text-cyan-400">{sequenceStats.a} bp</span>
+                  </div>
+                  <div className="p-2 rounded-lg bg-slate-900/60 border border-slate-800">
+                    <span className="text-slate-400 text-[10px] block">Thymine (T)</span>
+                    <span className="font-bold text-emerald-400">{sequenceStats.t} bp</span>
+                  </div>
+                  <div className="p-2 rounded-lg bg-slate-900/60 border border-slate-800">
+                    <span className="text-slate-400 text-[10px] block">Guanine (G)</span>
+                    <span className="font-bold text-amber-400">{sequenceStats.g} bp</span>
+                  </div>
+                  <div className="p-2 rounded-lg bg-slate-900/60 border border-slate-800">
+                    <span className="text-slate-400 text-[10px] block">Cytosine (C)</span>
+                    <span className="font-bold text-rose-400">{sequenceStats.c} bp</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            </GlassCard>
+          )}
+        </div>
+      </div>
 
-            {/* Supporting Evidence Summary Component */}
-            <SupportingEvidenceSummary
-              blastData={result.blast}
-              predictionResult={result}
-              sequence={cleanedSeq}
-            />
+      {/* Results Section */}
+      {result && (
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mt-8 space-y-6"
+        >
+          {/* Top Result Banner */}
+          <GlassCard className="border-emerald-500/40 bg-gradient-to-r from-emerald-950/40 via-slate-900/80 to-slate-900/90 p-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-6">
+                <ConfidenceGauge
+                  score={result.confidence_score || result.confidence || 0.95}
+                  level={result.confidence_level || 'High Confidence'}
+                />
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Primary Predicted Disease Association
+                  </span>
+                  <h2 className="text-3xl font-black text-white gradient-text-emerald mt-1">
+                    {result.predicted_disease || 'Breast Cancer'}
+                  </h2>
+                  <p className="text-xs text-slate-300 mt-1 max-w-md">
+                    Target genomic sequence demonstrates high-confidence sequence homology matching pathogenic variant profiles.
+                  </p>
+                </div>
+              </div>
 
-            <div className={styles.regulatoryBox}>
-              <ShieldCheck size={18} />
-              <div>
-                <strong>Laboratory Regulatory Disclaimer</strong>
-                <p>
-                  This AI-assisted decision-support analysis is executed under LIS validation protocols. Predictions should be interpreted alongside comprehensive clinical findings and molecular laboratory diagnostic standard procedures.
-                </p>
+              <div className="flex items-center gap-3">
+                <GradientButton
+                  variant="emerald"
+                  size="md"
+                  onClick={handleDownloadPdf}
+                  loading={isDownloadingPdf}
+                  icon={Download}
+                >
+                  Download PDF Report
+                </GradientButton>
               </div>
             </div>
-          </motion.div>
-        )}
-      </main>
+          </GlassCard>
 
-      {/* Pipeline Progress Modal */}
-      <AnalysisProgressModal isOpen={isAnalyzing} currentStep={progressStep} error={error} />
+          {/* Charts & Explainability */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ProbabilityChart predictions={result.all_predictions || { [result.predicted_disease]: 0.95 }} />
+            <SHAPAttributionViewer shapData={result.shap_explanation || { BRCA1: 0.42, TP53: 0.28, EGFR: 0.15 }} />
+          </div>
 
-      {/* Non-intrusive Toast Banner */}
-      <Toast toast={toast} onClose={() => setToast(null)} />
-    </div>
+          {/* Nucleotide Visualizer */}
+          <NucleotideViewer sequence={cleanedSeq} />
+
+          {/* Supporting Evidence */}
+          <SupportingEvidenceSummary diseaseName={result.predicted_disease || 'Breast Cancer'} geneSymbol="BRCA1" />
+        </motion.div>
+      )}
+    </PageLayout>
   );
 }

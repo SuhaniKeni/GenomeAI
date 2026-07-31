@@ -1,114 +1,85 @@
-import { useMemo } from 'react';
+import React from 'react';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
 } from 'recharts';
-import styles from './ProbabilityChart.module.css';
+import GlassCard from './GlassCard';
 
-const ALL_DISEASES = [
-  'Healthy',
-  'Hereditary Breast & Ovarian Cancer',
-  'Breast Cancer',
-  'Lung Cancer',
-  "Alzheimer's Disease",
-  "Parkinson's Disease",
-  'Leukemia',
-  'Type 2 Diabetes',
-  'Ovarian Cancer',
-  'Colorectal Cancer',
-];
+export default function ProbabilityChart({ predictions = {} }) {
+  // Format predictions into chart array
+  const data = Object.entries(predictions).map(([disease, prob]) => ({
+    disease,
+    probability: Math.round(prob * 1000) / 10, // percentage e.g. 88.5
+  }));
 
+  // Sort descending
+  data.sort((a, b) => b.probability - a.probability);
 
+  const colors = ['#06b6d4', '#10b981', '#6366f1', '#f59e0b', '#f43f5e', '#ec4899'];
 
-const CHART_PALETTE = ['#3A6FD8', '#4DA8A3', '#67A96B', '#D8A248', '#7B8DBD', '#B5C0CD'];
-
-export default function ProbabilityChart({ predictions = [], topDisease = '' }) {
-  const chartData = useMemo(() => {
-    const predMap = {};
-    predictions.forEach((item) => {
-      predMap[item.disease] = item.probability;
-    });
-
-    return ALL_DISEASES.map((dis) => {
-      const prob = predMap[dis] !== undefined ? predMap[dis] : 0.5;
-      return {
-        disease: dis,
-        probability: Number(prob.toFixed(2)),
-        isTop: dis === topDisease,
-      };
-    }).sort((a, b) => b.probability - a.probability);
-  }, [predictions, topDisease]);
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      const item = payload[0].payload;
+      return (
+        <div className="bg-slate-900/90 backdrop-blur-xl border border-cyan-500/30 p-3 rounded-xl shadow-2xl text-xs">
+          <p className="font-bold text-white mb-1">{item.disease}</p>
+          <p className="text-cyan-400 font-semibold">
+            Probability Score: <span className="text-white">{item.probability}%</span>
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.chartWrap}>
-        <ResponsiveContainer width="100%" height={260}>
-          <BarChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 40 }}>
+    <GlassCard className="w-full">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <span>📊</span> Disease Risk Probability Distribution
+          </h3>
+          <p className="text-xs text-slate-400 mt-0.5">Categorical probability scores output by neural classification layer</p>
+        </div>
+      </div>
+
+      <div className="h-64 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.05)" vertical={false} />
             <XAxis
               dataKey="disease"
-              angle={-25}
-              textAnchor="end"
+              stroke="#64748b"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
               interval={0}
-              tick={{ fontSize: 11, fill: '#718096' }}
+              angle={-20}
+              textAnchor="end"
             />
             <YAxis
+              stroke="#64748b"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
               unit="%"
               domain={[0, 100]}
-              tick={{ fontSize: 11, fill: '#718096' }}
             />
-            <Tooltip
-              formatter={(value) => [`${value}%`, 'Probability']}
-              contentStyle={{ background: '#FFFFFF', borderRadius: 8, border: '1px solid #E2E8F0', boxShadow: '0 4px 12px rgba(35,49,69,0.06)' }}
-            />
-            <Bar dataKey="probability" radius={[6, 6, 0, 0]}>
-              {chartData.map((entry, idx) => (
-                <Cell
-                  key={entry.disease}
-                  fill={entry.isTop ? '#3A6FD8' : CHART_PALETTE[(idx + 1) % CHART_PALETTE.length]}
-                />
+            <Tooltip content={<CustomTooltip />} />
+            <Bar dataKey="probability" radius={[8, 8, 0, 0]}>
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
               ))}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
-
-      <div className={styles.tableWrap}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Disease Association</th>
-              <th>Probability (%)</th>
-              <th>Likelihood Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {chartData.map((item, idx) => (
-              <tr key={item.disease} className={item.isTop ? styles.topRow : ''}>
-                <td>
-                  <span className={item.isTop ? styles.rankBadgeTop : styles.rankBadge}>
-                    #{idx + 1}
-                  </span>
-                </td>
-                <td className={styles.diseaseName}>
-                  <strong>{item.disease}</strong>
-                  {item.isTop && <span className={styles.topTag}>Highest Risk Association</span>}
-                </td>
-                <td className={styles.probVal}>
-                  <strong>{item.probability.toFixed(2)}%</strong>
-                </td>
-                <td>
-                  <div className={styles.barMini}>
-                    <div
-                      className={item.isTop ? styles.fillTop : styles.fillNormal}
-                      style={{ width: `${Math.max(item.probability, 4)}%` }}
-                    />
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    </GlassCard>
   );
 }

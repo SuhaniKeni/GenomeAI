@@ -1,67 +1,17 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Dna, Activity, ChevronDown, BarChart3, Database, Dna as DnaIcon,
-  GitCompare, Stethoscope, FileText, Clock, Settings, Shield, BookOpen,
-  Menu, X, ArrowRight
+  Dna, Activity, Sun, Moon, Search, Bell, Shield, Menu, X, ArrowRight, Sparkles, User
 } from 'lucide-react';
 import { fetchHealth } from '../api/client';
-import styles from './Navbar.module.css';
-
-const navLinks = [
-  { label: 'Dashboard', to: '/' },
-  { label: 'New Analysis', to: '/analysis' },
-  { label: 'Analysis History', to: '/history' },
-  { label: 'Laboratory Reports', to: '/reports' },
-  { label: 'About GenomeAI', to: '/about' },
-];
-
-
-function NavDropdown({ item, isActive, isOpen, onToggle }) {
-  const location = useLocation();
-  const childActive = item.children?.some(c => location.pathname.startsWith(c.to));
-
-  return (
-    <div
-      className={`${styles.dropdown} ${childActive ? styles.active : ''}`}
-      onMouseEnter={() => onToggle?.(item.label)}
-      onMouseLeave={() => onToggle?.(null)}
-    >
-      <button className={styles.dropdownTrigger} aria-haspopup="true" aria-expanded={isOpen}>
-        {item.label}
-        <ChevronDown size={14} className={`${styles.chevron} ${isOpen ? styles.chevronUp : ''}`} />
-      </button>
-      {isOpen && (
-        <div className={styles.dropdownMenu} role="menu">
-          {item.children.map((child) => {
-            const Icon = child.icon;
-            const isChildActive = location.pathname.startsWith(child.to);
-            return (
-              <Link
-                key={child.to}
-                to={child.to}
-                className={`${styles.dropdownItem} ${isChildActive ? styles.active : ''}`}
-                role="menuitem"
-                onClick={() => onToggle?.(null)}
-              >
-                {Icon && <Icon size={16} />}
-                {child.label}
-              </Link>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
+import { useTheme } from '../context/ThemeContext';
 
 export default function Navbar() {
-  const shouldReduceMotion = useReducedMotion();
   const location = useLocation();
+  const { theme, toggleTheme, isDark } = useTheme();
   const [apiOnline, setApiOnline] = useState(false);
   const [apiChecking, setApiChecking] = useState(true);
-  const [openDropdown, setOpenDropdown] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -84,144 +34,128 @@ export default function Navbar() {
     };
   }, []);
 
-  // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
-    setOpenDropdown(null);
   }, [location.pathname]);
 
-  // Close mobile menu on resize to desktop
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth > 900) setMobileMenuOpen(false);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const navItems = [
+    { label: 'Dashboard', to: '/' },
+    { label: 'New Analysis', to: '/analysis' },
+    { label: 'History', to: '/history' },
+    { label: 'Reports', to: '/reports' },
+    { label: 'Evidence', to: '/evidence' },
+    { label: 'Users', to: '/users' },
+    { label: 'API Docs', to: '/api-docs' },
+  ];
 
-  const isActive = (to) => {
-    if (to === '/') return location.pathname === '/';
-    if (to.startsWith('/#')) return false;
-    return location.pathname.startsWith(to);
+  const isActive = (path) => {
+    if (path === '/') return location.pathname === '/';
+    return location.pathname.startsWith(path);
   };
 
-  const isChildActive = (children) =>
-    children?.some(c => location.pathname.startsWith(c.to));
-
   return (
-    <motion.nav
-      className={styles.nav}
-      initial={shouldReduceMotion ? false : { opacity: 0, y: -16 }}
-      animate={shouldReduceMotion ? {} : { opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
-    >
-      <div className={styles.inner}>
-        {/* Column 1: Logo (left) */}
-        <div className={styles.leftCol}>
-          <Link to="/" className={styles.brand}>
-            <div className={styles.logoWrap}>
-              <Dna size={22} className={styles.logoIcon} />
+    <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-slate-950/70 border-b border-slate-800/80 transition-colors duration-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        
+        {/* Brand Logo */}
+        <Link to="/" className="flex items-center gap-3 group">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-sky-400 to-indigo-600 p-0.5 shadow-lg shadow-cyan-500/20 group-hover:shadow-cyan-500/40 transition-all duration-300">
+            <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+              <Dna className="w-5 h-5 text-cyan-400 group-hover:rotate-45 transition-transform duration-500" />
             </div>
-            <div className={styles.brandText}>
-              <span className={styles.brandName}>GenomeAI</span>
-              <span className={styles.brandSub}>Clinical LIS Platform</span>
-            </div>
-          </Link>
-        </div>
-
-        {/* Column 2: Navigation */}
-        <div className={styles.navCol}>
-          <div className={styles.navLinks}>
-            {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                to={link.to}
-                className={`${styles.navLink} ${isActive(link.to) ? styles.active : ''}`}
-              >
-                {link.label}
-              </Link>
-            ))}
           </div>
-        </div>
+          <div className="flex flex-col">
+            <span className="font-black text-lg tracking-tight gradient-text-cyan flex items-center gap-1">
+              GenomeAI <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-bold uppercase tracking-wider">v2.0</span>
+            </span>
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest -mt-1">Clinical LIS Platform</span>
+          </div>
+        </Link>
 
-        {/* Column 3: Actions */}
-        <div className={styles.rightCol}>
-          <div className={styles.apiStatus}>
-            <span className={`${styles.statusDot} ${apiChecking ? styles.checking : apiOnline ? styles.online : styles.offline}`} />
-            <span className={styles.statusLabel}>
-              {apiChecking ? 'Engine Checking...' : apiOnline ? 'Engine Online' : 'Engine Offline'}
+        {/* Desktop Navigation Links */}
+        <nav className="hidden lg:flex items-center gap-1 bg-slate-900/60 p-1.5 rounded-2xl border border-slate-800/80">
+          {navItems.map((item) => {
+            const active = isActive(item.to);
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`relative px-4 py-1.5 text-xs font-semibold rounded-xl transition-all duration-200 ${
+                  active
+                    ? 'text-white bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.15)]'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Right Actions */}
+        <div className="flex items-center gap-3">
+          {/* Health Status Dot */}
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/80 border border-slate-800 text-xs">
+            <span className={`w-2 h-2 rounded-full ${apiChecking ? 'bg-amber-400 animate-ping' : apiOnline ? 'bg-emerald-400 shadow-[0_0_8px_#10b981]' : 'bg-rose-400'}`} />
+            <span className="text-[11px] font-medium text-slate-300">
+              {apiChecking ? 'Checking...' : apiOnline ? 'Engine Online' : 'Offline'}
             </span>
           </div>
 
-          <Link to="/analysis" className={styles.actionBtn}>
-            <Dna size={16} />
+
+          {/* CTA Action */}
+          <Link
+            to="/analysis"
+            className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/35 hover:from-cyan-400 hover:to-blue-500 transition-all"
+          >
+            <Dna className="w-4 h-4" />
             <span>New Analysis</span>
           </Link>
 
+          {/* Mobile Hamburger */}
           <button
-            className={styles.hamburger}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            className="lg:hidden p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
           >
-            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Drawer */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            className={styles.mobileMenu}
-            initial={shouldReduceMotion ? false : { opacity: 0, y: -12, scale: 0.96 }}
-            animate={shouldReduceMotion ? {} : { opacity: 1, y: 0, scale: 1 }}
-            exit={shouldReduceMotion ? undefined : { opacity: 0, y: -12, scale: 0.96 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="lg:hidden bg-slate-950/95 backdrop-blur-2xl border-b border-slate-800 px-4 pt-2 pb-6 space-y-2"
           >
-            <div className={styles.mobileLinks}>
-              {navLinks.map((link) =>
-                link.children ? (
-                  <div key={link.label} className={styles.mobileGroup}>
-                    <span className={styles.mobileGroupLabel}>{link.label}</span>
-                    {link.children.map((child) => {
-                      const Icon = child.icon;
-                      const isChildActive = location.pathname.startsWith(child.to);
-                      return (
-                        <Link
-                          key={child.to}
-                          to={child.to}
-                          className={`${styles.mobileLink} ${isChildActive ? styles.active : ''}`}
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          {Icon && <Icon size={16} />}
-                          {child.label}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <Link
-                    key={link.label}
-                    to={link.to}
-                    className={`${styles.mobileLink} ${isActive(link.to) ? styles.active : ''}`}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <span className={styles.mobileLinkDot} />
-                    {link.label}
-                  </Link>
-                )
-              )}
-            </div>
-            <div className={styles.mobileFooter}>
-              <Link to="/predict" className={styles.mobileCta} onClick={() => setMobileMenuOpen(false)}>
-                Start Prediction
-                <ArrowRight size={16} />
+            {navItems.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`block px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                  isActive(item.to)
+                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                }`}
+              >
+                {item.label}
               </Link>
-            </div>
+            ))}
+            <Link
+              to="/analysis"
+              onClick={() => setMobileMenuOpen(false)}
+              className="mt-4 flex items-center justify-center gap-2 w-full py-3 text-sm font-bold rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg"
+            >
+              <Dna className="w-4 h-4" />
+              <span>Launch DNA Analysis</span>
+            </Link>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.nav>
+    </header>
   );
 }
-

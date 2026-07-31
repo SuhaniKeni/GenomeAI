@@ -1,112 +1,99 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Loader2, Dna, ShieldCheck, Clock } from 'lucide-react';
-import styles from './AnalysisProgressModal.module.css';
+import { Dna, Cpu, Activity, BarChart2, CheckCircle2, Loader2 } from 'lucide-react';
 
-const ANALYSIS_PIPELINE_STEPS = [
-  { id: 1, label: 'Uploading', desc: 'Transferring sequence payload to Fast-API backend engine' },
-  { id: 2, label: 'Validating', desc: 'Verifying nucleotide alphabet [A, T, G, C, N] and 201 bp target window' },
-  { id: 3, label: 'Preprocessing', desc: 'Normalizing base tokens and converting to integer tensors' },
-  { id: 4, label: 'Running CNN Model', desc: 'Executing 1D Convolutional Neural Network motif feature extraction' },
-  { id: 5, label: 'Generating Results', desc: 'Computing disease association softmax probability vectors' },
-  { id: 6, label: 'Generating Report', desc: 'Synthesizing clinical decision-support PDF summary report' },
-  { id: 7, label: 'Completed', desc: 'Finalizing LIS database record and rendering summary view' },
-];
+export default function AnalysisProgressModal({ isOpen, modelName = '1D-CNN v2.0', onComplete }) {
+  const [currentStep, setCurrentStep] = useState(0);
 
-export default function AnalysisProgressModal({ isOpen, currentStep, error }) {
-  const [estTime, setEstTime] = useState(1.5);
+  const steps = [
+    { title: 'Sequence Tokenization', desc: 'Slicing FASTA sequence into k-mer token embeddings', icon: Dna, color: 'text-cyan-400' },
+    { title: 'Deep Neural Processing', desc: `Running tensor ops on ${modelName} neural engine`, icon: Cpu, color: 'text-emerald-400' },
+    { title: 'SHAP Feature Attribution', desc: 'Computing perturbation-based local feature attributions', icon: Activity, color: 'text-indigo-400' },
+    { title: 'Clinical Report Synthesis', desc: 'Packaging disease prediction & ReportLab PDF assets', icon: BarChart2, color: 'text-amber-400' },
+  ];
 
   useEffect(() => {
-    if (isOpen) {
-      setEstTime(Math.max(0.2, (1.8 - currentStep * 0.22).toFixed(1)));
+    if (!isOpen) {
+      setCurrentStep(0);
+      return;
     }
-  }, [currentStep, isOpen]);
+
+    const timer1 = setTimeout(() => setCurrentStep(1), 600);
+    const timer2 = setTimeout(() => setCurrentStep(2), 1400);
+    const timer3 = setTimeout(() => setCurrentStep(3), 2200);
+    const timer4 = setTimeout(() => {
+      if (onComplete) onComplete();
+    }, 2800);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+      clearTimeout(timer4);
+    };
+  }, [isOpen, onComplete]);
 
   if (!isOpen) return null;
 
-  const currentStepObj = ANALYSIS_PIPELINE_STEPS.find((s) => s.id === currentStep) || ANALYSIS_PIPELINE_STEPS[0];
-  const progressPercent = Math.round((currentStep / ANALYSIS_PIPELINE_STEPS.length) * 100);
-
   return (
     <AnimatePresence>
-      <div className={styles.backdrop}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl">
         <motion.div
-          className={styles.modal}
-          initial={{ opacity: 0, scale: 0.96, y: 10 }}
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96, y: 10 }}
-          transition={{ duration: 0.2 }}
+          exit={{ opacity: 0, scale: 0.95, y: -20 }}
+          className="relative max-w-md w-full glass-panel rounded-3xl p-8 border border-cyan-500/30 shadow-[0_0_50px_rgba(6,182,212,0.25)] text-center overflow-hidden"
         >
-          <div className={styles.header}>
-            <div className={styles.headerTitle}>
-              <div className={styles.iconWrap}>
-                <Dna className={styles.dnaIcon} size={22} />
-              </div>
-              <div>
-                <h3>GenomeAI CNN Analysis Pipeline</h3>
-                <span className={styles.sub}>Enterprise Genomic LIS Engine Execution</span>
-              </div>
-            </div>
-            <div className={styles.badge}>{progressPercent}%</div>
+          {/* Top Animated Pulse Glow */}
+          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-48 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent animate-pulse" />
+
+          {/* Central Spinner Icon */}
+          <div className="relative inline-flex items-center justify-center mb-6">
+            <div className="w-20 h-20 rounded-full border-2 border-cyan-500/20 border-t-cyan-400 animate-spin" />
+            <Dna className="w-8 h-8 text-cyan-400 absolute animate-pulse" />
           </div>
 
-          <div className={styles.progressTrack}>
-            <div className={styles.progressBar} style={{ width: `${progressPercent}%` }} />
-          </div>
+          <h3 className="text-xl font-extrabold text-white tracking-tight mb-1">
+            GenomeAI Inference Engine
+          </h3>
+          <p className="text-xs text-slate-400 mb-6">Executing multi-layer deep learning inference</p>
 
-          {/* Active Step Highlight Card */}
-          <div className={styles.activeStepCard}>
-            {error ? (
-              <div className={styles.errorContent}>
-                <h4>Analysis Encountered an Issue</h4>
-                <p>{error}</p>
-              </div>
-            ) : (
-              <>
-                <div className={styles.stepHeader}>
-                  <Loader2 className={styles.spinner} size={18} />
-                  <h4>Step {currentStep}: {currentStepObj.label}</h4>
-                </div>
-                <p className={styles.stepDesc}>{currentStepObj.desc}</p>
-              </>
-            )}
-          </div>
-
-          {/* Step Timeline */}
-          <div className={styles.stepsList}>
-            {ANALYSIS_PIPELINE_STEPS.map((step) => {
-              const isDone = currentStep > step.id;
-              const isCurrent = currentStep === step.id;
+          {/* Progress Steps */}
+          <div className="space-y-4 text-left">
+            {steps.map((step, idx) => {
+              const Icon = step.icon;
+              const isDone = currentStep > idx;
+              const isCurrent = currentStep === idx;
 
               return (
                 <div
-                  key={step.id}
-                  className={`${styles.stepRow} ${isDone ? styles.done : ''} ${isCurrent ? styles.current : ''}`}
+                  key={idx}
+                  className={`flex items-start gap-3 p-3 rounded-xl border transition-all duration-300 ${
+                    isDone
+                      ? 'bg-emerald-950/20 border-emerald-500/30 opacity-90'
+                      : isCurrent
+                      ? 'bg-cyan-950/40 border-cyan-500/40 shadow-[0_0_20px_rgba(6,182,212,0.15)]'
+                      : 'bg-slate-900/30 border-slate-800/60 opacity-40'
+                  }`}
                 >
-                  <div className={styles.stepIcon}>
+                  <div className="mt-0.5 shrink-0">
                     {isDone ? (
-                      <CheckCircle2 size={15} className={styles.checkIcon} />
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                     ) : isCurrent ? (
-                      <Loader2 size={15} className={styles.spinnerSmall} />
+                      <Loader2 className="w-5 h-5 text-cyan-400 animate-spin" />
                     ) : (
-                      <span className={styles.numDot}>{step.id}</span>
+                      <Icon className={`w-5 h-5 ${step.color}`} />
                     )}
                   </div>
-                  <span className={styles.stepName}>{step.label}</span>
+                  <div>
+                    <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                      {step.title}
+                    </h4>
+                    <p className="text-xs text-slate-400">{step.desc}</p>
+                  </div>
                 </div>
               );
             })}
-          </div>
-
-          <div className={styles.footerRow}>
-            <div className={styles.timeEst}>
-              <Clock size={13} />
-              <span>Est. time remaining: <strong>~{estTime}s</strong></span>
-            </div>
-            <div className={styles.engineTag}>
-              <ShieldCheck size={13} />
-              <span>CNN Model v2.0</span>
-            </div>
           </div>
         </motion.div>
       </div>

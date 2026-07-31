@@ -1,43 +1,35 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, Trash2, FileText, Clock, RefreshCw, AlertCircle, CheckCircle2, Eye, Dna, FileCheck
+  Search, Trash2, FileText, Clock, RefreshCw, AlertCircle, CheckCircle2, Eye, Dna, FileCheck, Download, Filter, X
 } from 'lucide-react';
 
-import Sidebar from '../components/Sidebar.jsx';
-import HistoryDetailsModal from '../components/History/HistoryDetailsModal.jsx';
-import { fetchHistory, deleteHistoryRecord, downloadPredictionReport } from '../api/client.js';
-import styles from './HistoryPage.module.css';
+import PageLayout from '../components/PageLayout';
+import GlassCard from '../components/GlassCard';
+import GradientButton from '../components/GradientButton';
+import { useToast } from '../context/ToastContext';
+import { fetchHistory, deleteHistoryRecord, downloadPredictionReport } from '../api/client';
 
 export default function HistoryPage() {
   const navigate = useNavigate();
+  const { showSuccess, showError, showInfo } = useToast();
+
   const [historyItems, setHistoryItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [error, setError] = useState(null);
   const [selectedRecord, setSelectedRecord] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const loadHistory = async () => {
     setLoading(true);
-    setError(null);
     try {
-      console.log('[HistoryPage Debug] Requesting history records for search term:', searchTerm);
       const data = await fetchHistory({ limit: 100, search: searchTerm });
       const records = data.records || data.items || [];
-      console.log('[HistoryPage Debug] History loaded successfully. Records count:', records.length, '| Total count:', data.total);
       setHistoryItems(records);
       setTotal(data.total ?? records.length);
-      setError(null);
     } catch (err) {
-      console.error('[HistoryPage Debug] Error fetching history:', err);
-      const reasonMsg =
-        err?.response?.data?.detail?.message ||
-        err?.response?.data?.detail ||
-        err?.message ||
-        'Unable to connect to the GenomeAI backend server.';
-      setError(reasonMsg);
+      showError('Unable to connect to LIS database.');
       setHistoryItems([]);
     } finally {
       setLoading(false);
@@ -54,8 +46,9 @@ export default function HistoryPage() {
       await deleteHistoryRecord(id);
       setHistoryItems((prev) => prev.filter((item) => item.id !== id));
       setTotal((prev) => Math.max(0, prev - 1));
+      showSuccess(`Deleted analysis record ANL-${id}`);
     } catch (err) {
-      alert('Failed to delete history record.');
+      showError('Failed to delete history record.');
     }
   };
 
@@ -71,197 +64,208 @@ export default function HistoryPage() {
       anchor.download = `GenomeAI_Report_ANL-${item.id}.pdf`;
       anchor.click();
       URL.revokeObjectURL(url);
+      showSuccess(`Downloaded PDF Report for ANL-${item.id}`);
     } catch {
-      alert('Could not generate PDF report for this record.');
+      showError('Could not generate PDF report for this record.');
     }
   };
 
-  const handleInspectRecord = (item) => {
-    setSelectedRecord(item);
-    setIsModalOpen(true);
+  const exportToCSV = () => {
+    if (historyItems.length === 0) return;
+    const headers = ['ID', 'Disease', 'Confidence', 'Confidence Level', 'Sequence Length', 'Timestamp'];
+    const rows = historyItems.map((item) => [
+      `ANL-${item.id}`,
+      `"${item.predicted_disease}"`,
+      `${item.confidence}%`,
+      `"${item.confidence_level}"`,
+      item.sequence_length || item.sequence?.length || 201,
+      `"${item.created_at || item.timestamp || ''}"`,
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `GenomeAI_History_Export_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showSuccess('Exported history records to CSV!');
   };
 
   return (
-    <div className={styles.layout}>
-      <Sidebar />
-
-      <main className={styles.main}>
-
-        <div className={styles.headerRow}>
-          <div>
-            <span className={styles.kicker}>Laboratory Audit Log</span>
-            <h1>Analysis History Archive</h1>
-            <p>
-              Search, filter, and inspect past AI-supported genomic analysis records stored in the LIS database.
-            </p>
+    <PageLayout
+      title="Analysis History Archive"
+      subtitle="Audited LIS database repository of AI-supported genomic disease risk classifications"
+      action={
+        <div className="flex items-center gap-3">
+          <GradientButton variant="glass" size="sm" onClick={exportToCSV} icon={Download}>
+            Export CSV
+          </GradientButton>
+          <GradientButton variant="cyan" size="sm" onClick={loadHistory} icon={RefreshCw}>
+            Refresh
+          </GradientButton>
+        </div>
+      }
+    >
+      {/* Search & Filter Toolbar */}
+      <GlassCard>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="relative w-full sm:w-96">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 transform -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search by disease, ID, or gene..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-slate-900/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs font-medium text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+            />
           </div>
-          <div className={styles.totalBadge}>
-            <strong>{loading ? '...' : total}</strong> Records Archived
+
+          <div className="flex items-center gap-2 text-xs text-slate-400">
+            <span>Showing <strong className="text-white">{historyItems.length}</strong> of <strong className="text-cyan-400">{total}</strong> records</span>
           </div>
         </div>
+      </GlassCard>
 
-        <div className={styles.tableCard}>
-          <div className={styles.filterRow}>
-            <div className={styles.searchBox}>
-              <Search size={16} className={styles.searchIcon} />
-              <input
-                type="text"
-                placeholder="Search by disease or sequence..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <button type="button" className={styles.refreshBtn} onClick={loadHistory} disabled={loading}>
-              <RefreshCw size={14} className={loading ? styles.spinIcon : ''} /> Refresh
-            </button>
-          </div>
-
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
+      {/* History Table */}
+      <GlassCard>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs text-slate-300">
+            <thead>
+              <tr className="border-b border-slate-800 text-slate-400 uppercase tracking-wider text-[10px]">
+                <th className="py-3.5 px-4">Analysis ID</th>
+                <th className="py-3.5 px-4">Predicted Disease</th>
+                <th className="py-3.5 px-4">Confidence</th>
+                <th className="py-3.5 px-4">Confidence Level</th>
+                <th className="py-3.5 px-4">Sequence Length</th>
+                <th className="py-3.5 px-4">Timestamp</th>
+                <th className="py-3.5 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60">
+              {loading ? (
                 <tr>
-                  <th>Analysis ID</th>
-                  <th>Sequence Snippet</th>
-                  <th>Predicted Disease</th>
-                  <th>Confidence</th>
-                  <th>Supporting Evidence Match</th>
-                  <th>Date & Time</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                    <RefreshCw className="w-6 h-6 animate-spin text-cyan-400 mx-auto mb-2" />
+                    Loading LIS audit history...
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  /* 1. LOADING STATE ONLY */
-                  <tr>
-                    <td colSpan={8} className={styles.emptyCell}>
-                      <div className={styles.stateBox}>
-                        <RefreshCw size={24} className={styles.spinIcon} style={{ color: 'var(--genome-blue, #3A6FD8)' }} />
-                        <span style={{ fontWeight: 600, marginTop: '8px' }}>Loading analysis records from database...</span>
-                      </div>
+              ) : historyItems.length > 0 ? (
+                historyItems.map((item) => (
+                  <tr key={item.id} className="hover:bg-slate-900/50 transition-colors">
+                    <td className="py-3.5 px-4 font-mono font-bold text-cyan-400">
+                      ANL-{item.id}
                     </td>
-                  </tr>
-                ) : error ? (
-                  /* 2. ERROR STATE ONLY */
-                  <tr>
-                    <td colSpan={8} className={styles.errorCell}>
-                      <div className={styles.errorDisplayBox}>
-                        <AlertCircle size={28} className={styles.errorIcon} />
-                        <h4 className={styles.errorTitle}>Unable to retrieve analysis history.</h4>
-                        <p className={styles.errorReason}>
-                          <strong>Reason:</strong> {error}
-                        </p>
-                        <button type="button" className={styles.retryBtn} onClick={loadHistory}>
-                          <RefreshCw size={14} /> Retry Connection
+                    <td className="py-3.5 px-4 font-bold text-white">
+                      {item.predicted_disease}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="px-2.5 py-1 rounded-full font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
+                        {item.confidence}%
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-800 text-slate-300">
+                        {item.confidence_level}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 font-mono text-slate-400">
+                      {item.sequence_length || item.sequence?.length || 201} bp
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-400">
+                      {item.created_at || item.timestamp || 'Recently'}
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => setSelectedRecord(item)}
+                          className="p-1.5 rounded-lg bg-slate-800 text-cyan-400 hover:bg-slate-700 hover:text-cyan-300 transition-colors"
+                          title="Inspect Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDownloadReport(item)}
+                          className="p-1.5 rounded-lg bg-slate-800 text-emerald-400 hover:bg-slate-700 hover:text-emerald-300 transition-colors"
+                          title="Download PDF"
+                        >
+                          <FileText className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="p-1.5 rounded-lg bg-slate-800 text-rose-400 hover:bg-slate-700 hover:text-rose-300 transition-colors"
+                          title="Delete Record"
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
                   </tr>
-                ) : historyItems.length === 0 ? (
-                  /* 3. EMPTY STATE ONLY (When request succeeded with 0 records) */
-                  <tr>
-                    <td colSpan={8} className={styles.emptyCell}>
-                      <div className={styles.stateBox}>
-                        <Clock size={28} style={{ color: 'var(--text-secondary, #718096)' }} />
-                        <span style={{ fontWeight: 600, marginTop: '8px' }}>No analysis records found.</span>
-                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #718096)', margin: '4px 0 0 0' }}>
-                          Perform a sequence prediction to build history.
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  /* 4. SUCCESS STATE (Render Data Rows) */
-                  historyItems.map((item) => (
-                    <tr key={item.id}>
-                      <td className={styles.idCell}>
-                        <strong>ANL-{item.id}</strong>
-                      </td>
-                      <td className={styles.seqCell}>
-                        <code>{item.sequence ? item.sequence.slice(0, 24) + '...' : '201 bp'}</code>
-                      </td>
-                      <td className={styles.diseaseCell}>
-                        <strong>{item.predicted_disease}</strong>
-                      </td>
-                      <td>
-                        <span className={styles.confBadge}>{item.confidence}%</span>
-                      </td>
-                      <td>
-                        {item.blast?.top_hit ? (
-                          <span style={{ color: 'var(--genome-blue, #3A6FD8)', fontWeight: 600, fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                            <Dna size={12} />
-                            {item.blast.top_hit.gene} ({item.blast.top_hit.identity}%)
-                          </span>
-                        ) : (
-                          <span style={{ color: 'var(--text-secondary, #718096)', fontSize: '0.8rem' }}>No Match</span>
-                        )}
-                      </td>
-                      <td className={styles.dateCell}>{item.created_at || 'Recently'}</td>
-                      <td>
-                        <span className={styles.statusOk}>
-                          <CheckCircle2 size={12} /> Archived
-                        </span>
-                      </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <div className={styles.actionGroup}>
-                          <button
-                            type="button"
-                            className={styles.pdfBtn}
-                            onClick={() => handleInspectRecord(item)}
-                            title="View Prediction Analysis"
-                          >
-                            <Eye size={14} /> View
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.pdfBtn}
-                            onClick={() => {
-                              navigate('/evidence', {
-                                state: {
-                                  predictionResult: item,
-                                  blastData: item.blast,
-                                  sequence: item.sequence,
-                                  timestamp: item.timestamp,
-                                }
-                              });
-                            }}
-                            title="View Supporting Evidence"
-                          >
-                            <FileCheck size={14} /> Evidence
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.pdfBtn}
-                            onClick={() => handleDownloadReport(item)}
-                            title="Download PDF Report"
-                          >
-                            <FileText size={14} /> PDF
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.delBtn}
-                            onClick={() => handleDelete(item.id)}
-                            title="Delete Record"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                    No history records found matching your query.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-      </main>
+      </GlassCard>
 
-      <HistoryDetailsModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        record={selectedRecord}
-        onDownloadPDF={handleDownloadReport}
-      />
-    </div>
+      {/* Record Inspect Modal */}
+      <AnimatePresence>
+        {selectedRecord && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -20 }}
+              className="relative max-w-2xl w-full glass-panel rounded-3xl p-6 border border-cyan-500/30 space-y-4 max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                <div>
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <span>🧬</span> Analysis Details: ANL-{selectedRecord.id}
+                  </h3>
+                  <p className="text-xs text-slate-400">Recorded on {selectedRecord.created_at || selectedRecord.timestamp || 'Recent'}</p>
+                </div>
+                <button
+                  onClick={() => setSelectedRecord(null)}
+                  className="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                  <span className="text-slate-400 block mb-1">Predicted Disease</span>
+                  <span className="text-sm font-bold text-cyan-400">{selectedRecord.predicted_disease}</span>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                  <span className="text-slate-400 block mb-1">Confidence Score</span>
+                  <span className="text-sm font-bold text-emerald-400">{selectedRecord.confidence}% ({selectedRecord.confidence_level})</span>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-xs font-semibold text-slate-400 block mb-1">DNA Sequence (201 bp)</span>
+                <div className="p-3 rounded-xl bg-slate-950 font-mono text-[11px] text-cyan-300 border border-slate-800 break-all max-h-32 overflow-y-auto">
+                  {selectedRecord.sequence}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2 border-t border-slate-800">
+                <GradientButton variant="emerald" size="sm" onClick={() => handleDownloadReport(selectedRecord)} icon={FileText}>
+                  Download PDF Report
+                </GradientButton>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </PageLayout>
   );
 }
