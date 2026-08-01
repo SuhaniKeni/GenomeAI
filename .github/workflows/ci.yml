@@ -163,48 +163,58 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Verify FASTA Parser & Preprocessor
+      - name: Verify Sequence Validation & Cleaning
         run: |
           python -c "
-          from backend.preprocessing.fasta_parser import parse_fasta
+          from backend.utils.tokenizer import validate_dna_sequence
           seq = 'A' * 50 + 'T' * 50 + 'G' * 50 + 'C' * 50 + 'A'
-          parsed = parse_fasta(seq)
-          assert len(parsed) == 201
-          print('✓ FASTA Parser & sequence cleaner verified (201-bp sequence OK)')
+          cleaned = validate_dna_sequence(seq)
+          assert len(cleaned) == 201
+          print('✓ Sequence validator verified (201-bp sequence OK)')
           "
 
       - name: Verify DNA Tokenizer
         run: |
           python -c "
-          from backend.preprocessing.tokenizer import DNATokenizer
-          tok = DNATokenizer()
+          from backend.utils.tokenizer import tokenize_sequence
           seq = 'A' * 50 + 'T' * 50 + 'G' * 50 + 'C' * 50 + 'A'
-          tokens = tok.tokenize(seq)
+          tokens = tokenize_sequence(seq)
           assert len(tokens) == 201
-          print('✓ DNA Tokenizer verified')
+          print('✓ DNA Tokenizer verified (201 integer tokens OK)')
           "
 
-      - name: Verify CNN & LSTM Model Initialization
+      - name: Verify Predictor & Disease Classification Engine
         run: |
           python -c "
-          from backend.predictor.model import CNNModel
-          model = CNNModel()
-          assert model is not None
-          print('✓ CNN 1D-Model architecture successfully instantiated')
+          from backend.predictor.predictor import predict_disease
+          seq = 'A' * 50 + 'T' * 50 + 'G' * 50 + 'C' * 50 + 'A'
+          res = predict_disease(seq)
+          assert 'predicted_disease' in res
+          assert 'confidence' in res
+          print('✓ Prediction engine verified (Predicted:', res['predicted_disease'], 'Confidence:', res['confidence'], '%)')
           "
 
-      - name: Verify ReportLab PDF Generation
+      - name: Verify SHAP Explainability Attribution Pipeline
         run: |
           python -c "
-          from backend.services.pdf_report import generate_clinical_report
-          pdf_bytes = generate_clinical_report({
-              'sample_id': 'ANL-TEST-001',
-              'patient_id': 'PAT-999',
-              'predicted_disease': 'Pathogenic Variant (Test)',
-              'confidence': 98.5,
-              'confidence_level': 'HIGH',
-              'sequence': 'A' * 201
-          })
+          from backend.services.explainability_service import compute_shap_values
+          from backend.utils.tokenizer import prepare_model_input
+          tokens = prepare_model_input('A' * 50 + 'T' * 50 + 'G' * 50 + 'C' * 50 + 'A')
+          shap_res = compute_shap_values(tokens, model_type='cnn', num_perturbations=10)
+          assert 'shap_values' in shap_res
+          assert len(shap_res['shap_values']) == 201
+          print('✓ SHAP explainability pipeline verified (201 feature importance scores computed)')
+          "
+
+      - name: Verify ReportLab Clinical PDF Generation
+        run: |
+          python -c "
+          from backend.services.report_generator import generate_prediction_report_pdf
+          pdf_bytes = generate_prediction_report_pdf(
+              'A' * 201,
+              {'predicted_disease': 'Pathogenic Variant (Test)', 'confidence': 98.5, 'confidence_level': 'HIGH'},
+              'Test Patient'
+          )
           assert len(pdf_bytes) > 0
           print('✓ ReportLab PDF report generation verified (Bytes generated:', len(pdf_bytes), ')')
           "
