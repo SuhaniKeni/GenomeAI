@@ -5,8 +5,11 @@ import {
 } from 'lucide-react';
 
 import PageLayout from '../components/PageLayout';
-import GlassCard from '../components/GlassCard';
-import GradientButton from '../components/GradientButton';
+import Card, { CardHeader } from '../components/common/Card';
+import Button from '../components/common/Button';
+import Badge from '../components/common/Badge';
+import Modal from '../components/common/Modal';
+import EmptyState from '../components/common/EmptyState';
 import { useToast } from '../context/ToastContext';
 import { fetchLabUsers, createLabUser, deleteLabUser } from '../api/client';
 
@@ -61,191 +64,162 @@ export default function LabUsersPage() {
       setPassword('');
       loadUsers();
     } catch (err) {
-      const msg = err?.response?.data?.detail?.message || 'Failed to create user account.';
-      showError(msg);
+      showError('Failed to create user account.');
     } finally {
       setCreating(false);
     }
   };
 
-  const handleDeleteUser = async (userId) => {
-    if (!window.confirm('Remove this user from the laboratory?')) return;
+  const handleDeleteUser = async (userId, name) => {
+    if (!window.confirm(`Remove user ${name} from laboratory roster?`)) return;
     try {
       await deleteLabUser(userId);
+      showSuccess(`Removed ${name}`);
       setUsers((prev) => prev.filter((u) => u.id !== userId));
-      showSuccess('User account deleted.');
     } catch {
-      showError('Failed to delete user account.');
+      showError('Failed to delete user.');
     }
   };
 
   return (
     <PageLayout
-      title="Laboratory Users & Access Control"
-      subtitle="Manage personnel accounts, grant Role-Based Access Control (RBAC) permissions, and audit laboratory operators"
-      action={
-        <GradientButton variant="cyan" size="sm" onClick={() => setModalOpen(true)} icon={UserPlus}>
-          Add Laboratory User
-        </GradientButton>
-      }
+      title="Laboratory User Management"
+      subtitle="Manage access permissions, team roles, and laboratory personnel accounts"
     >
-      <GlassCard>
+      <Card>
+        <CardHeader
+          title="Personnel Roster"
+          subtitle={`Active Personnel Accounts: ${users.length}`}
+          icon={Users}
+          action={
+            <Button variant="gradient" size="sm" icon={UserPlus} onClick={() => setModalOpen(true)}>
+              Add Personnel
+            </Button>
+          }
+        />
+
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
+          <table className="w-full text-left text-xs text-slate-200">
             <thead>
               <tr className="border-b border-slate-800 text-slate-400 uppercase tracking-wider text-[10px]">
-                <th className="py-3.5 px-4">User</th>
-                <th className="py-3.5 px-4">Email</th>
-                <th className="py-3.5 px-4">Role</th>
-                <th className="py-3.5 px-4">Created Date</th>
-                <th className="py-3.5 px-4 text-right">Actions</th>
+                <th className="py-3 px-4">User Name</th>
+                <th className="py-3 px-4">Email Address</th>
+                <th className="py-3 px-4">Assigned Role</th>
+                <th className="py-3 px-4">Account Status</th>
+                <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="py-12 text-center text-slate-400">
-                    <RefreshCw className="w-6 h-6 animate-spin text-cyan-400 mx-auto mb-2" />
-                    Loading laboratory user directory...
-                  </td>
-                </tr>
-              ) : users.length > 0 ? (
+              {users.length > 0 ? (
                 users.map((u) => (
-                  <tr key={u.id} className="hover:bg-slate-900/50 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center font-bold text-xs">
-                          <User className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-white">{u.full_name}</p>
-                          <p className="text-[10px] text-slate-400">ID: USR-{u.id}</p>
-                        </div>
+                  <tr key={u.id} className="hover:bg-slate-800/40 transition-colors">
+                    <td className="py-3.5 px-4 font-bold text-slate-100 flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs">
+                        <User className="w-3.5 h-3.5" />
                       </div>
+                      {u.full_name}
                     </td>
-                    <td className="py-3.5 px-4 text-slate-300 font-mono">
-                      {u.email}
+                    <td className="py-3.5 px-4 text-slate-300 font-mono">{u.email}</td>
+                    <td className="py-3.5 px-4">
+                      <Badge variant="cyan" size="sm">
+                        {u.role || 'Personnel'}
+                      </Badge>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold border ${
-                        u.role === 'Administrator'
-                          ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30'
-                          : u.role === 'Laboratory Manager'
-                          ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30'
-                          : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
-                      }`}>
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-400">
-                      {u.created_at ? new Date(u.created_at).toLocaleDateString() : 'Active'}
+                      <Badge variant="success" size="sm">
+                        Active
+                      </Badge>
                     </td>
                     <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={() => handleDeleteUser(u.id)}
-                        className="p-1.5 rounded-lg bg-slate-800 text-rose-400 hover:bg-slate-700 hover:text-rose-300 transition-colors"
-                        title="Remove User"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <Button variant="danger" size="sm" icon={Trash2} onClick={() => handleDeleteUser(u.id, u.full_name)}>
+                        Remove
+                      </Button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-slate-400">
-                    No users registered in this laboratory account yet.
+                  <td colSpan={5} className="py-8">
+                    <EmptyState
+                      icon={Users}
+                      title="No Laboratory Users Found"
+                      description="Click 'Add Personnel' to register a new user account for your team."
+                      actionLabel="Add Personnel"
+                      onAction={() => setModalOpen(true)}
+                    />
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-      </GlassCard>
+      </Card>
 
-      {/* Create User Modal */}
-      <AnimatePresence>
-        {modalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -20 }}
-              className="relative max-w-md w-full glass-panel rounded-3xl p-6 border border-cyan-500/30 space-y-4"
-            >
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <UserPlus className="w-5 h-5 text-cyan-400" /> Register Laboratory Operator
-                </h3>
-                <button onClick={() => setModalOpen(false)} className="p-1 rounded-lg text-slate-400 hover:text-white">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <form onSubmit={handleCreateUser} className="space-y-4 text-xs">
-                <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Full Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="e.g. Dr. Alex Vance"
-                    className="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Email Address</label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="alex@genomeai.lab"
-                    className="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Password</label>
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Password123!"
-                    className="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Laboratory Role</label>
-                  <select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500"
-                  >
-                    <option value="Laboratory Technician">Laboratory Technician</option>
-                    <option value="Laboratory Manager">Laboratory Manager</option>
-                    <option value="Administrator">Administrator</option>
-                    <option value="Researcher">Researcher</option>
-                  </select>
-                </div>
-
-                <div className="pt-2 flex justify-end gap-2">
-                  <GradientButton variant="glass" size="sm" type="button" onClick={() => setModalOpen(false)}>
-                    Cancel
-                  </GradientButton>
-                  <GradientButton variant="cyan" size="sm" type="submit" loading={creating}>
-                    Create Account
-                  </GradientButton>
-                </div>
-              </form>
-            </motion.div>
+      {/* Add User Modal */}
+      <Modal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="Add Laboratory Personnel"
+        subtitle="Provision a new user account for GenomeAI LIS"
+      >
+        <form onSubmit={handleCreateUser} className="space-y-4 text-xs">
+          <div>
+            <label className="block text-slate-400 font-bold mb-1">Full Name</label>
+            <input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="e.g. Dr. Alex Morgan"
+              className="w-full p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-emerald-500/50"
+            />
           </div>
-        )}
-      </AnimatePresence>
+
+          <div>
+            <label className="block text-slate-400 font-bold mb-1">Email Address</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="alex.morgan@hospital.org"
+              className="w-full p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-emerald-500/50"
+            />
+          </div>
+
+          <div>
+            <label className="block text-slate-400 font-bold mb-1">Account Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="w-full p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-emerald-500/50"
+            />
+          </div>
+
+          <div>
+            <label className="block text-slate-400 font-bold mb-1">Assigned Role</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="w-full p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-emerald-500/50"
+            >
+              <option value="Laboratory Technician">Laboratory Technician</option>
+              <option value="Senior Bioinformatician">Senior Bioinformatician</option>
+              <option value="Clinical Geneticist">Clinical Geneticist</option>
+              <option value="LIS Administrator">LIS Administrator</option>
+            </select>
+          </div>
+
+          <div className="pt-2 flex justify-end gap-2">
+            <Button variant="secondary" size="sm" onClick={() => setModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="gradient" size="sm" type="submit" isLoading={creating}>
+              Create Account
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </PageLayout>
   );
 }

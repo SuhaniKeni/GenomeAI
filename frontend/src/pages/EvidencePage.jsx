@@ -8,11 +8,13 @@ import {
 } from 'lucide-react';
 
 import PageLayout from '../components/PageLayout';
-import GlassCard from '../components/GlassCard';
-import GradientButton from '../components/GradientButton';
-import StatCard from '../components/StatCard';
+import Card, { CardHeader } from '../components/common/Card';
+import Button from '../components/common/Button';
+import Badge from '../components/common/Badge';
+import StatCard from '../components/common/StatCard';
 import { useToast } from '../context/ToastContext';
 import { downloadPredictionReport, fetchHistory } from '../api/client';
+
 
 export default function EvidencePage() {
   const location = useLocation();
