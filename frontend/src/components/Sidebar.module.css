@@ -1,27 +1,7 @@
 .sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: var(--sidebar-width, 212px);
-  background: var(--bg-sidebar);
-  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  z-index: 100;
-  transition: width 0.25s ease, transform 0.25s ease;
-  box-shadow: 2px 0 8px rgba(35, 49, 69, 0.03);
-}
-
-@media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
-  }
-  .sidebar.collapsed {
-    transform: translateX(0);
-    width: 72px;
-  }
 }
 
 .brandHead {

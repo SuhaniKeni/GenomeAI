@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import {
-  Dna, Activity, Search, Bell, Shield, Sparkles, User, Command, ChevronDown
+  Dna, Search, Command, Menu, X
 } from 'lucide-react';
 import { fetchHealth } from '../api/client';
 
-export default function Navbar() {
-  const location = useLocation();
+export default function Navbar({ mobileMenuOpen = false, onToggleMobileMenu }) {
   const [apiOnline, setApiOnline] = useState(false);
   const [apiChecking, setApiChecking] = useState(true);
 
@@ -32,26 +30,38 @@ export default function Navbar() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 w-full backdrop-blur-2xl bg-[#030712]/80 border-b border-slate-800/80 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-40 w-full h-16 backdrop-blur-2xl bg-[#030712]/90 border-b border-slate-800/80 shrink-0">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-4">
         
-        {/* Brand Logo */}
-        <Link to="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-400 to-cyan-400 p-0.5 shadow-lg shadow-emerald-500/20 group-hover:shadow-emerald-500/40 transition-all duration-300">
-            <div className="w-full h-full bg-[#030712] rounded-[10px] flex items-center justify-center">
-              <Dna className="w-5 h-5 text-emerald-400 group-hover:rotate-45 transition-transform duration-500" />
+        {/* Left Brand + Mobile Menu Button */}
+        <div className="flex items-center gap-3">
+          {/* Mobile Hamburger Toggle */}
+          <button
+            onClick={onToggleMobileMenu}
+            className="md:hidden p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white"
+            title="Toggle Menu"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+
+          {/* Brand Logo */}
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-400 to-cyan-400 p-0.5 shadow-lg shadow-emerald-500/20 group-hover:shadow-emerald-500/40 transition-all duration-300">
+              <div className="w-full h-full bg-[#030712] rounded-[10px] flex items-center justify-center">
+                <Dna className="w-5 h-5 text-emerald-400 group-hover:rotate-45 transition-transform duration-500" />
+              </div>
             </div>
-          </div>
-          <div className="flex flex-col">
-            <span className="font-black text-lg tracking-tight gradient-text-emerald flex items-center gap-1.5">
-              GenomeAI <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold uppercase tracking-wider">v2.0</span>
-            </span>
-            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest -mt-1">Clinical LIS Engine</span>
-          </div>
-        </Link>
+            <div className="flex flex-col">
+              <span className="font-black text-lg tracking-tight gradient-text-emerald flex items-center gap-1.5">
+                GenomeAI <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold uppercase tracking-wider">v2.0</span>
+              </span>
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest -mt-1">Clinical LIS Engine</span>
+            </div>
+          </Link>
+        </div>
 
         {/* Global Search Bar Hint */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs text-slate-400 max-w-xs w-full">
+        <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs text-slate-400 max-w-xs w-full">
           <Search className="w-4 h-4 text-slate-500" />
           <span className="grow truncate">Search genomic variants, samples, genes...</span>
           <kbd className="hidden lg:inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 bg-slate-800 border border-slate-700 rounded-md">
@@ -75,7 +85,7 @@ export default function Navbar() {
             className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-slate-950 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:from-emerald-400 hover:to-cyan-400 transition-all duration-200"
           >
             <Dna className="w-4 h-4 shrink-0" />
-            <span>New Analysis</span>
+            <span className="hidden sm:inline">New Analysis</span>
           </Link>
 
           {/* User Profile Quick Avatar */}

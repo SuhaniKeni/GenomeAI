@@ -1,4 +1,4 @@
-import PageLayout from '../components/PageLayout';
+import AppLayout from './AppLayout';
 
-export default PageLayout;
-export { PageLayout as MainLayout };
+export default AppLayout;
+export { AppLayout as MainLayout };

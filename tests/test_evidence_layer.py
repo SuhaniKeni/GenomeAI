@@ -60,7 +60,7 @@ def test_evidence_cache():
 def test_evidence_builder_pipeline(monkeypatch):
     """Verify full Smart Evidence Builder pipeline."""
 
-    async def mock_clinvar(disease_name, gene_symbol):
+    async def mock_clinvar(disease_name=None, gene_symbol=None, **kwargs):
         return {
             "found": True,
             "source": "NCBI ClinVar API",
@@ -68,7 +68,7 @@ def test_evidence_builder_pipeline(monkeypatch):
             "review_status": "criteria provided",
         }
 
-    async def mock_ncbi(gene_symbol):
+    async def mock_ncbi(gene_symbol=None, **kwargs):
         return {
             "found": True,
             "source": "NCBI Gene API",
