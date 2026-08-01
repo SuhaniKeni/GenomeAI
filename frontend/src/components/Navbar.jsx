@@ -72,25 +72,7 @@ export default function Navbar() {
           </div>
         </Link>
 
-        {/* Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-1 bg-[#09181b]/80 p-1.5 rounded-2xl border border-emerald-900/40">
-          {navItems.map((item) => {
-            const active = isActive(item.to);
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={`relative px-4 py-1.5 text-xs font-semibold rounded-xl transition-all duration-200 ${
-                  active
-                    ? 'text-white bg-gradient-to-r from-emerald-500/25 to-teal-500/25 border border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
-                    : 'text-emerald-100/70 hover:text-white hover:bg-emerald-900/30'
-                }`}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+
 
         {/* Right Actions */}
         <div className="flex items-center gap-3">
