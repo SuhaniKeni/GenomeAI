@@ -209,7 +209,7 @@ export default function PredictPage() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
                 <div>
-                  <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">
+                  <label className="block text-xs font-bold uppercase text-emerald-300/80 mb-1">
                     Sample Identification
                   </label>
                   <div className="flex items-center gap-2">
@@ -217,11 +217,11 @@ export default function PredictPage() {
                       type="text"
                       value={sampleId}
                       onChange={(e) => setSampleId(e.target.value)}
-                      className="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono font-bold text-cyan-300 focus:outline-none focus:border-cyan-500"
+                      className="w-full bg-[#040d12]/90 border border-emerald-900/50 rounded-xl px-3 py-2 text-xs font-mono font-bold text-emerald-400 focus:outline-none focus:border-emerald-500"
                     />
                     <button
                       onClick={() => setSampleId(generateSampleId())}
-                      className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white"
+                      className="p-2 rounded-xl bg-[#09181b] border border-emerald-900/40 text-emerald-300 hover:text-white"
                       title="Regenerate Sample ID"
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
@@ -230,7 +230,7 @@ export default function PredictPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">
+                  <label className="block text-xs font-bold uppercase text-emerald-300/80 mb-1">
                     Patient Reference ID (Optional)
                   </label>
                   <input
@@ -238,7 +238,7 @@ export default function PredictPage() {
                     placeholder="e.g. PAT-98412"
                     value={patientId}
                     onChange={(e) => setPatientId(e.target.value)}
-                    className="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3 py-2 text-xs font-medium text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-[#040d12]/90 border border-emerald-900/50 rounded-xl px-3 py-2 text-xs font-medium text-white placeholder-emerald-300/40 focus:outline-none focus:border-emerald-500"
                   />
                 </div>
               </div>
@@ -249,25 +249,25 @@ export default function PredictPage() {
           <GlassCard>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <Dna className="w-5 h-5 text-cyan-400" /> Genomic Sequence Input
+                <Dna className="w-5 h-5 text-emerald-400" /> Genomic Sequence Input
               </h3>
 
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleLoadSample}
-                  className="px-3 py-1 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-xs font-semibold hover:bg-cyan-500/20"
+                  className="px-3 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-xs font-bold hover:bg-emerald-500/25 transition-all"
                 >
                   Load 201-bp Control
                 </button>
                 <button
                   onClick={handlePasteSequence}
-                  className="px-3 py-1 rounded-lg bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700"
+                  className="px-3 py-1 rounded-lg bg-[#09181b] text-emerald-200/80 border border-emerald-900/40 text-xs font-semibold hover:bg-emerald-950/50"
                 >
                   Paste Clipboard
                 </button>
                 <button
                   onClick={handleClearSequence}
-                  className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-rose-400"
+                  className="p-1.5 rounded-lg bg-[#09181b] border border-emerald-900/40 text-emerald-300/70 hover:text-rose-400"
                   title="Clear Input"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -277,13 +277,13 @@ export default function PredictPage() {
 
             {/* Drag & Drop Upload Zone */}
             <div className="relative mb-4">
-              <label className="flex flex-col items-center justify-center w-full h-32 rounded-2xl border-2 border-dashed border-cyan-500/30 bg-slate-900/40 hover:bg-slate-900/70 hover:border-cyan-400 cursor-pointer transition-all">
+              <label className="flex flex-col items-center justify-center w-full h-32 rounded-2xl border-2 border-dashed border-emerald-500/35 bg-[#040d12]/60 hover:bg-[#09181b]/80 hover:border-emerald-400 cursor-pointer transition-all">
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <Upload className="w-8 h-8 text-cyan-400 mb-2 animate-bounce" />
-                  <p className="text-xs text-slate-300 font-semibold mb-1">
+                  <Upload className="w-8 h-8 text-emerald-400 mb-2 animate-bounce" />
+                  <p className="text-xs text-emerald-100 font-semibold mb-1">
                     Drag and drop your FASTA / TXT sequence file
                   </p>
-                  <p className="text-[10px] text-slate-400">Supports .fasta, .fa, .txt files</p>
+                  <p className="text-[10px] text-emerald-300/60">Supports .fasta, .fa, .txt files</p>
                 </div>
                 <input type="file" accept=".fasta,.fa,.txt" onChange={onFileChange} className="hidden" />
               </label>
@@ -296,7 +296,7 @@ export default function PredictPage() {
                 value={sequence}
                 onChange={(e) => setSequence(e.target.value)}
                 placeholder=">FASTA_HEADER\nATGCATGCATGC..."
-                className="w-full bg-slate-950/80 border border-slate-800 rounded-2xl p-4 font-mono text-xs text-cyan-300 placeholder-slate-600 focus:outline-none focus:border-cyan-500/60 leading-relaxed custom-scrollbar"
+                className="w-full bg-[#040d12]/95 border border-emerald-900/50 rounded-2xl p-4 font-mono text-xs text-emerald-300 placeholder-emerald-300/30 focus:outline-none focus:border-emerald-500/60 leading-relaxed custom-scrollbar"
               />
             </div>
 

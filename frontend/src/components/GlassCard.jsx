@@ -5,16 +5,16 @@ export default function GlassCard({
   children,
   className = '',
   hoverEffect = true,
-  glowColor = 'cyan', // cyan, emerald, indigo, rose, amber
+  glowColor = 'emerald', // emerald, cyan, indigo, rose, amber
   onClick,
   ...props
 }) {
   const glowClasses = {
-    cyan: 'hover:border-cyan-500/40 hover:shadow-[0_0_30px_rgba(6,182,212,0.15)]',
-    emerald: 'hover:border-emerald-500/40 hover:shadow-[0_0_30px_rgba(16,185,129,0.15)]',
-    indigo: 'hover:border-indigo-500/40 hover:shadow-[0_0_30px_rgba(99,102,241,0.15)]',
-    rose: 'hover:border-rose-500/40 hover:shadow-[0_0_30px_rgba(244,63,94,0.15)]',
-    amber: 'hover:border-amber-500/40 hover:shadow-[0_0_30px_rgba(245,158,11,0.15)]',
+    emerald: 'hover:border-emerald-500/50 hover:shadow-[0_0_35px_rgba(16,185,129,0.22)]',
+    cyan: 'hover:border-teal-500/50 hover:shadow-[0_0_35px_rgba(20,184,166,0.22)]',
+    indigo: 'hover:border-emerald-400/50 hover:shadow-[0_0_35px_rgba(52,211,153,0.22)]',
+    rose: 'hover:border-rose-500/50 hover:shadow-[0_0_35px_rgba(244,63,94,0.22)]',
+    amber: 'hover:border-amber-500/50 hover:shadow-[0_0_35px_rgba(245,158,11,0.22)]',
   };
 
   return (

@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react';
 
 export default function GradientButton({
   children,
-  variant = 'cyan', // cyan, emerald, indigo, rose, outline, glass
+  variant = 'emerald', // emerald, cyan, indigo, rose, outline, glass
   size = 'md', // sm, md, lg
   loading = false,
   disabled = false,
@@ -15,12 +15,12 @@ export default function GradientButton({
   ...props
 }) {
   const variants = {
-    cyan: 'bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:from-cyan-400 hover:to-blue-500 border border-cyan-400/30',
-    emerald: 'bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:from-emerald-400 hover:to-teal-500 border border-emerald-400/30',
-    indigo: 'bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:from-indigo-400 hover:to-purple-500 border border-indigo-400/30',
+    emerald: 'bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-slate-950 font-bold shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:from-emerald-400 hover:to-teal-400 border border-emerald-400/40',
+    cyan: 'bg-gradient-to-r from-teal-500 via-emerald-500 to-lime-500 text-slate-950 font-bold shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 hover:from-teal-400 hover:to-emerald-400 border border-teal-400/40',
+    indigo: 'bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white shadow-lg shadow-emerald-600/25 hover:shadow-emerald-600/40 border border-emerald-500/30',
     rose: 'bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 text-white shadow-lg shadow-rose-500/25 hover:shadow-rose-500/40 hover:from-rose-400 hover:to-pink-500 border border-rose-400/30',
-    glass: 'bg-slate-800/60 backdrop-blur-md text-slate-200 border border-slate-700/60 hover:bg-slate-700/60 hover:border-cyan-500/40 hover:text-white',
-    outline: 'bg-transparent text-cyan-400 border border-cyan-500/40 hover:bg-cyan-500/10 hover:border-cyan-400',
+    glass: 'bg-[#09181b]/80 backdrop-blur-md text-emerald-100 border border-emerald-900/50 hover:bg-emerald-900/40 hover:border-emerald-500/40 hover:text-white',
+    outline: 'bg-transparent text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/10 hover:border-emerald-400',
   };
 
   const sizes = {
