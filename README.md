@@ -4,9 +4,8 @@
 
 ### *Next-Generation AI Framework for Genomic Disease Prediction & Variant Analysis*
 
-[![CI Pipeline](https://github.com/SuhaniKeni/GenomeAI/actions/workflows/ci.yml/badge.svg)](https://github.com/SuhaniKeni/GenomeAI/actions/workflows/ci.yml)
-[![Render Deployment](https://github.com/SuhaniKeni/GenomeAI/actions/workflows/deploy.yml/badge.svg)](https://github.com/SuhaniKeni/GenomeAI/actions/workflows/deploy.yml)
-[![CodeQL Security Scan](https://github.com/SuhaniKeni/GenomeAI/actions/workflows/codeql.yml/badge.svg)](https://github.com/SuhaniKeni/GenomeAI/actions/workflows/codeql.yml)
+
+
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.2%2B-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org)
