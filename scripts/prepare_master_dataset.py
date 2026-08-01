@@ -15,14 +15,7 @@ OUTPUT_FILE = PROJECT_ROOT / "datasets" / "master" / "master_dataset.csv"
 os.makedirs(PROJECT_ROOT / "datasets" / "master", exist_ok=True)
 
 # Diseases we want
-TARGET_DISEASES = [
-    "Breast",
-    "Lung",
-    "Alzheimer",
-    "Parkinson",
-    "Leukemia",
-    "Diabetes"
-]
+TARGET_DISEASES = ["Breast", "Lung", "Alzheimer", "Parkinson", "Leukemia", "Diabetes"]
 
 chunk_size = 100000
 
@@ -30,24 +23,15 @@ filtered_chunks = []
 
 print("Reading ClinVar dataset...")
 
-for chunk in tqdm(
-    pd.read_csv(
-        INPUT_FILE,
-        sep="\t",
-        chunksize=chunk_size,
-        low_memory=False
-    )
-):
+for chunk in tqdm(pd.read_csv(INPUT_FILE, sep="\t", chunksize=chunk_size, low_memory=False)):
 
     if "PhenotypeList" not in chunk.columns:
         continue
 
     filtered = chunk[
-        chunk["PhenotypeList"].fillna("").str.contains(
-            "|".join(TARGET_DISEASES),
-            case=False,
-            regex=True
-        )
+        chunk["PhenotypeList"]
+        .fillna("")
+        .str.contains("|".join(TARGET_DISEASES), case=False, regex=True)
     ]
 
     filtered_chunks.append(filtered)

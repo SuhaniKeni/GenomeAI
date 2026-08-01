@@ -1,9 +1,11 @@
 """Pydantic V2 Schemas for GenomeAI Database Operations."""
+
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional, List, Any, Dict
-from pydantic import BaseModel, EmailStr, Field
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, EmailStr
 
 
 class LaboratoryBase(BaseModel):

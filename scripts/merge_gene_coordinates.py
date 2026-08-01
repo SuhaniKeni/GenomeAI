@@ -11,30 +11,25 @@ print("=" * 60)
 print("Loading datasets...")
 
 disease_df = pd.read_csv(
-    PROJECT_ROOT / "datasets" / "processed" / "final_disease_dataset.csv",
-    low_memory=False
+    PROJECT_ROOT / "datasets" / "processed" / "final_disease_dataset.csv", low_memory=False
 )
 
-gene_df = pd.read_csv(
-    PROJECT_ROOT / "datasets" / "processed" / "gene_coordinates.csv"
-)
+gene_df = pd.read_csv(PROJECT_ROOT / "datasets" / "processed" / "gene_coordinates.csv")
 
 print(f"Disease records : {len(disease_df)}")
 print(f"Gene records    : {len(gene_df)}")
 
 # Rename columns in gene table before merging
-gene_df = gene_df.rename(columns={
-    "Chromosome": "GeneChromosome",
-    "Start": "GeneStart",
-    "End": "GeneEnd",
-    "Strand": "GeneStrand"
-})
-
-merged_df = disease_df.merge(
-    gene_df,
-    on="GeneSymbol",
-    how="left"
+gene_df = gene_df.rename(
+    columns={
+        "Chromosome": "GeneChromosome",
+        "Start": "GeneStart",
+        "End": "GeneEnd",
+        "Strand": "GeneStrand",
+    }
 )
+
+merged_df = disease_df.merge(gene_df, on="GeneSymbol", how="left")
 
 print("\nMissing Gene Coordinates:")
 print(merged_df["GeneChromosome"].isna().sum())
@@ -50,14 +45,4 @@ print(f"Saved to   : {output}")
 
 print("\nFirst five rows:")
 
-print(
-    merged_df[
-        [
-            "GeneSymbol",
-            "TargetDisease",
-            "GeneChromosome",
-            "GeneStart",
-            "GeneEnd"
-        ]
-    ].head()
-)
+print(merged_df[["GeneSymbol", "TargetDisease", "GeneChromosome", "GeneStart", "GeneEnd"]].head())

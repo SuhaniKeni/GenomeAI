@@ -8,12 +8,12 @@ Database Models:
 - EvidenceCache: ClinVar, NCBI, and local genomic evidence cache
 - AnalysisHistory: Prediction audit history log
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from sqlalchemy import (
-    Column, Integer, String, Float, Text, DateTime, ForeignKey, Index
-)
+
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 try:
@@ -43,7 +43,9 @@ class Laboratory(Base):
 
     # Relationships
     users = relationship("User", back_populates="laboratory", cascade="all, delete-orphan")
-    dna_analyses = relationship("DNAAnalysis", back_populates="laboratory", cascade="all, delete-orphan")
+    dna_analyses = relationship(
+        "DNAAnalysis", back_populates="laboratory", cascade="all, delete-orphan"
+    )
     reports = relationship("Report", back_populates="laboratory", cascade="all, delete-orphan")
 
 
@@ -51,11 +53,15 @@ class User(Base):
     __tablename__ = "users"
 
     user_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    lab_id = Column(Integer, ForeignKey("laboratories.lab_id", ondelete="CASCADE"), nullable=False, index=True)
+    lab_id = Column(
+        Integer, ForeignKey("laboratories.lab_id", ondelete="CASCADE"), nullable=False, index=True
+    )
     full_name = Column(String(100), nullable=False)
     email = Column(String(100), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
-    role = Column(String(50), nullable=False)  # Administrator, Laboratory Manager, Laboratory Technician, Researcher, Student
+    role = Column(
+        String(50), nullable=False
+    )  # Administrator, Laboratory Manager, Laboratory Technician, Researcher, Student
     employee_id = Column(String(50), nullable=True)
     department = Column(String(100), nullable=True)
     phone = Column(String(30), nullable=True)
@@ -74,8 +80,12 @@ class DNAAnalysis(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     analysis_id = Column(String(50), unique=True, index=True, nullable=False)
-    lab_id = Column(Integer, ForeignKey("laboratories.lab_id", ondelete="CASCADE"), nullable=False, index=True)
-    user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
+    lab_id = Column(
+        Integer, ForeignKey("laboratories.lab_id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id = Column(
+        Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True
+    )
     sample_id = Column(String(50), index=True, nullable=False)
     patient_id = Column(String(50), index=True, nullable=True)
     dna_sequence = Column(Text, nullable=False)
@@ -96,16 +106,27 @@ class DNAAnalysis(Base):
     # Relationships
     laboratory = relationship("Laboratory", back_populates="dna_analyses")
     user = relationship("User", back_populates="dna_analyses")
-    report = relationship("Report", back_populates="dna_analysis", uselist=False, cascade="all, delete-orphan")
+    report = relationship(
+        "Report", back_populates="dna_analysis", uselist=False, cascade="all, delete-orphan"
+    )
 
 
 class Report(Base):
     __tablename__ = "reports"
 
     report_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    analysis_id = Column(String(50), ForeignKey("dna_analyses.analysis_id", ondelete="CASCADE"), nullable=False, index=True)
-    lab_id = Column(Integer, ForeignKey("laboratories.lab_id", ondelete="CASCADE"), nullable=False, index=True)
-    user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
+    analysis_id = Column(
+        String(50),
+        ForeignKey("dna_analyses.analysis_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    lab_id = Column(
+        Integer, ForeignKey("laboratories.lab_id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id = Column(
+        Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True
+    )
     report_filename = Column(String(255), nullable=False)
     report_path = Column(String(255), nullable=False)
     generated_at = Column(DateTime(timezone=True), default=current_utc_time)
@@ -123,7 +144,9 @@ class EvidenceCache(Base):
     category = Column(String(50), index=True, nullable=False)
     data_json = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), default=current_utc_time)
-    updated_at = Column(DateTime(timezone=True), default=current_utc_time, onupdate=current_utc_time)
+    updated_at = Column(
+        DateTime(timezone=True), default=current_utc_time, onupdate=current_utc_time
+    )
 
 
 class AnalysisHistory(Base):

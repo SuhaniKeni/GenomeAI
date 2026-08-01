@@ -3,6 +3,7 @@
 Detects and classifies mutations in DNA sequences relative to a reference,
 and identifies their potential impact on disease prediction.
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -68,9 +69,7 @@ def detect_mutations(
     obs = observed_sequence.upper().strip()
 
     if len(ref) != len(obs):
-        raise ValueError(
-            f"Sequence length mismatch: reference {len(ref)} != observed {len(obs)}"
-        )
+        raise ValueError(f"Sequence length mismatch: reference {len(ref)} != observed {len(obs)}")
 
     mutations = []
     mutation_count = 0
@@ -86,14 +85,16 @@ def detect_mutations(
 
         types[mut_type] = types.get(mut_type, 0) + 1
 
-        mutations.append({
-            "position": reference_genome_start + i + 1,  # 1-based
-            "index_in_sequence": i,
-            "reference_base": ref[i],
-            "observed_base": obs[i],
-            "mutation_type": mut_type,
-            "impact": impact,
-        })
+        mutations.append(
+            {
+                "position": reference_genome_start + i + 1,  # 1-based
+                "index_in_sequence": i,
+                "reference_base": ref[i],
+                "observed_base": obs[i],
+                "mutation_type": mut_type,
+                "impact": impact,
+            }
+        )
 
     # Determine overall impact
     if mutation_count == 0:
@@ -127,7 +128,9 @@ def compare_to_consensus(
     nucleotide across the dataset (defaulting to 'N' for unknown positions).
     """
     if observed_tokens is None or observed_tokens.ndim != 2 or observed_tokens.shape[0] == 0:
-        raise ValueError("Invalid observed_tokens: Expected 2D array of shape (1, sequence_length).")
+        raise ValueError(
+            "Invalid observed_tokens: Expected 2D array of shape (1, sequence_length)."
+        )
 
     seq_len = observed_tokens.shape[1]
 
@@ -145,7 +148,6 @@ def compare_to_consensus(
     con_str = "".join(_token_to_base(int(consensus_tokens[0, i])) for i in range(seq_len))
 
     return detect_mutations(con_str, obs_str, genome_start)
-
 
 
 def get_mutation_summary_text(mutation_result: dict, disease_name: str) -> str:

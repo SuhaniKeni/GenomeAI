@@ -119,29 +119,32 @@ def build_dataset():
         if mutated is None:
             continue
 
-        rows.append({
-            "AlleleID": row._0,
-            "Gene": row.Gene,
-            "Disease": row.TargetDisease,
-            "Label": LABELS[row.TargetDisease],
-            "Chromosome": row.Chromosome,
-            "Position": row.Start,
-            "ReferenceSequence": sequence,
-            "MutatedSequence": mutated,
-            "ReferenceAllele": row.ReferenceAllele,
-            "AlternateAllele": row.AlternateAllele,
-            "ClinicalSignificance": row.ClinicalSignificance,
-        })
+        rows.append(
+            {
+                "AlleleID": row._0,
+                "Gene": row.Gene,
+                "Disease": row.TargetDisease,
+                "Label": LABELS[row.TargetDisease],
+                "Chromosome": row.Chromosome,
+                "Position": row.Start,
+                "ReferenceSequence": sequence,
+                "MutatedSequence": mutated,
+                "ReferenceAllele": row.ReferenceAllele,
+                "AlternateAllele": row.AlternateAllele,
+                "ClinicalSignificance": row.ClinicalSignificance,
+            }
+        )
 
     final_df = pd.DataFrame(rows)
 
     # CRITICAL: Deduplicate by MutatedSequence to ensure EVERY sequence has EXACTLY ONE label
-    final_df = final_df.drop_duplicates(subset=["MutatedSequence"], keep="first").reset_index(drop=True)
+    final_df = final_df.drop_duplicates(subset=["MutatedSequence"], keep="first").reset_index(
+        drop=True
+    )
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     final_df.to_csv(OUTPUT, index=False)
     return final_df
-
 
 
 def main():
@@ -155,4 +158,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

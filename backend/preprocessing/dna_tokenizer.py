@@ -12,12 +12,12 @@ OUTPUT = PROJECT_ROOT / "datasets" / "processed" / "ai_training_tokenized.csv"
 
 from backend.utils.tokenizer import TOKEN_MAP
 
-
 df = pd.read_csv(INPUT)
 
 
 def tokenize(sequence):
     return [TOKEN_MAP.get(base.upper(), TOKEN_MAP["N"]) for base in str(sequence).strip()]
+
 
 df["ReferenceTokens"] = df["ReferenceSequence"].apply(tokenize)
 df["MutatedTokens"] = df["MutatedSequence"].apply(tokenize)

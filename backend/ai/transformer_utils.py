@@ -17,10 +17,10 @@ def train_one_epoch(
     total = 0
 
     for batch in tqdm(
-    dataloader,
-    desc="Training",
-    leave=True,
-    dynamic_ncols=True,
+        dataloader,
+        desc="Training",
+        leave=True,
+        dynamic_ncols=True,
     ):
 
         input_ids = batch["input_ids"].to(device)
@@ -56,6 +56,7 @@ def train_one_epoch(
 
     return epoch_loss, epoch_accuracy
 
+
 def validate_one_epoch(
     model,
     dataloader,
@@ -71,10 +72,10 @@ def validate_one_epoch(
     with torch.no_grad():
 
         for batch in tqdm(
-        dataloader,
-        desc="Validation",
-        leave=False,
-        dynamic_ncols=True,
+            dataloader,
+            desc="Validation",
+            leave=False,
+            dynamic_ncols=True,
         ):
 
             input_ids = batch["input_ids"].to(device)

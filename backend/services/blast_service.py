@@ -5,6 +5,7 @@ using Biopython (Bio.Blast.NCBIWWW and Bio.Blast.NCBIXML).
 Executes asynchronously with timeout protection, strict sequence validation,
 and graceful fallback handling.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -13,7 +14,7 @@ import os
 import re
 import time
 from io import StringIO
-from typing import Any, Optional
+from typing import Any
 
 try:
     from Bio.Blast import NCBIWWW, NCBIXML
@@ -110,7 +111,9 @@ def run_blast(
 ) -> str:
     """Perform synchronous NCBI Remote BLAST query via qblast (runs in thread pool)."""
     cleaned_seq = validate_blast_sequence(sequence)
-    logger.info(f"Submitting NCBI Remote BLAST search: {len(cleaned_seq)} bp, program={program}, db={database}")
+    logger.info(
+        f"Submitting NCBI Remote BLAST search: {len(cleaned_seq)} bp, program={program}, db={database}"
+    )
 
     result_handle = NCBIWWW.qblast(
         program=program,
@@ -127,6 +130,7 @@ def run_blast(
 def _parse_with_element_tree(xml_output: str, query_len: int) -> dict[str, Any]:
     """Fallback XML parser using standard xml.etree.ElementTree."""
     import xml.etree.ElementTree as ET
+
     root = ET.fromstring(xml_output)
     hit = root.find(".//Hit")
     if hit is None:
@@ -171,7 +175,11 @@ def _parse_with_element_tree(xml_output: str, query_len: int) -> dict[str, Any]:
 
     gene_symbol = _extract_gene_symbol(hit_def)
     organism = _extract_organism(hit_def)
-    ncbi_url = f"https://www.ncbi.nlm.nih.gov/nuccore/{accession}" if accession else "https://www.ncbi.nlm.nih.gov/"
+    ncbi_url = (
+        f"https://www.ncbi.nlm.nih.gov/nuccore/{accession}"
+        if accession
+        else "https://www.ncbi.nlm.nih.gov/"
+    )
 
     top_hit = {
         "gene": gene_symbol,
@@ -234,11 +242,17 @@ def parse_results(xml_output: str, query_len: int) -> dict[str, Any]:
         align_len = hsp.align_length
         identities = hsp.identities
         identity_pct = round((identities / align_len) * 100.0, 2) if align_len > 0 else 0.0
-        coverage_pct = min(round((align_len / query_len) * 100.0, 2), 100.0) if query_len > 0 else 0.0
+        coverage_pct = (
+            min(round((align_len / query_len) * 100.0, 2), 100.0) if query_len > 0 else 0.0
+        )
 
         gene_symbol = _extract_gene_symbol(title)
         organism = _extract_organism(title)
-        ncbi_url = f"https://www.ncbi.nlm.nih.gov/nuccore/{accession}" if accession != "N/A" else "https://www.ncbi.nlm.nih.gov/"
+        ncbi_url = (
+            f"https://www.ncbi.nlm.nih.gov/nuccore/{accession}"
+            if accession != "N/A"
+            else "https://www.ncbi.nlm.nih.gov/"
+        )
 
         top_hit = {
             "gene": gene_symbol,

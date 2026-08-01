@@ -3,9 +3,10 @@
 Uses PostgreSQL SQLAlchemy CRUD operations (via backend/database/crud.py) for
 History, Admin Dashboard, and LIS User/Laboratory management.
 """
+
 from __future__ import annotations
 
-from typing import Optional, List, Dict, Any
+from typing import Optional
 
 try:
     from backend.database import crud
@@ -83,8 +84,12 @@ def get_laboratory_by_id(lab_id: int) -> Optional[dict]:
     return crud.get_laboratory_by_id(lab_id)
 
 
-def create_user_record(lab_id: int, email: str, full_name: str, password_hash: str, role: str) -> dict:
-    return crud.create_user_record(lab_id=lab_id, email=email, full_name=full_name, password_hash=password_hash, role=role)
+def create_user_record(
+    lab_id: int, email: str, full_name: str, password_hash: str, role: str
+) -> dict:
+    return crud.create_user_record(
+        lab_id=lab_id, email=email, full_name=full_name, password_hash=password_hash, role=role
+    )
 
 
 def get_user_by_email(email: str) -> Optional[dict]:

@@ -11,15 +11,16 @@ Extends the original routes with:
 - Enhanced PDF reports
 - AI insights generation
 """
+
 from __future__ import annotations
 
 import json
 import logging
 from io import BytesIO
 from pathlib import Path
+from typing import Optional
 
-from typing import Optional, List
-from fastapi import APIRouter, HTTPException, Query, Header, Depends
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -30,21 +31,26 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 
 
 try:
-    from backend.db.session import get_db, Base, engine
-    from backend.db.models import Laboratory, User, DNAAnalysis, Report
+    from backend.database.connection import Base, engine, get_db
+    from backend.database.models import DNAAnalysis, Laboratory, Report, User
     from backend.services.auth_service import (
-        create_access_token, decode_access_token, get_password_hash, verify_password
+        create_access_token,
+        decode_access_token,
+        get_password_hash,
+        verify_password,
     )
 except ImportError:
-    from db.session import get_db, Base, engine
-    from db.models import Laboratory, User, DNAAnalysis, Report
+    from database.connection import Base, engine, get_db
+    from database.models import DNAAnalysis, Laboratory, User
     from services.auth_service import (
-        create_access_token, decode_access_token, get_password_hash, verify_password
+        create_access_token,
+        decode_access_token,
+        get_password_hash,
+        verify_password,
     )
 
 # Auto-create SQLAlchemy tables
 Base.metadata.create_all(bind=engine)
-
 
 
 class RegisterLabRequest(BaseModel):
@@ -77,10 +83,12 @@ class ForgotPasswordRequest(BaseModel):
     email: str
 
 
-
 try:
     from backend.predictor.predictor import predict_disease
-    from backend.services.report_generator import generate_prediction_report_pdf
+    from backend.services.analytics_service import get_cached_analytics
+    from backend.services.benchmark_service import get_cached_benchmark, run_benchmark
+    from backend.services.blast_service import execute_blast_search
+    from backend.services.evidence_builder import build_genomic_evidence
     from backend.services.explainability_service import (
         compute_shap_values,
         generate_explanation_text,
@@ -89,23 +97,23 @@ try:
         compare_to_consensus,
         get_mutation_summary_text,
     )
-    from backend.services.benchmark_service import get_cached_benchmark, run_benchmark
-    from backend.services.analytics_service import get_cached_analytics
     from backend.services.prediction_history import (
         add_record,
-        get_history,
-        delete_record,
         clear_history,
+        delete_record,
+        get_history,
         get_statistics,
     )
-    from backend.utils.tokenizer import prepare_model_input, EXPECTED_LENGTH
+    from backend.services.report_generator import generate_prediction_report_pdf
     from backend.utils.disease_mapper import get_disease
-    from backend.services.evidence_builder import build_genomic_evidence
-    from backend.services.blast_service import execute_blast_search
+    from backend.utils.tokenizer import EXPECTED_LENGTH, prepare_model_input
 except ImportError:
     try:
         from backend.predictor.predictor import predict_disease
-        from backend.services.report_generator import generate_prediction_report_pdf
+        from backend.services.analytics_service import get_cached_analytics
+        from backend.services.benchmark_service import get_cached_benchmark, run_benchmark
+        from backend.services.blast_service import execute_blast_search
+        from backend.services.evidence_builder import build_genomic_evidence
         from backend.services.explainability_service import (
             compute_shap_values,
             generate_explanation_text,
@@ -114,22 +122,21 @@ except ImportError:
             compare_to_consensus,
             get_mutation_summary_text,
         )
-        from backend.services.benchmark_service import get_cached_benchmark, run_benchmark
-        from backend.services.analytics_service import get_cached_analytics
         from backend.services.prediction_history import (
             add_record,
-            get_history,
-            delete_record,
             clear_history,
+            delete_record,
+            get_history,
             get_statistics,
         )
-        from backend.utils.tokenizer import prepare_model_input, EXPECTED_LENGTH
+        from backend.services.report_generator import generate_prediction_report_pdf
         from backend.utils.disease_mapper import get_disease
-        from backend.services.evidence_builder import build_genomic_evidence
-        from backend.services.blast_service import execute_blast_search
+        from backend.utils.tokenizer import EXPECTED_LENGTH, prepare_model_input
     except ImportError:
-        from predictor.predictor import predict_disease
-        from services.report_generator import generate_prediction_report_pdf
+        from services.analytics_service import get_cached_analytics
+        from services.benchmark_service import get_cached_benchmark, run_benchmark
+        from services.blast_service import execute_blast_search
+        from services.evidence_builder import build_genomic_evidence
         from services.explainability_service import (
             compute_shap_values,
             generate_explanation_text,
@@ -138,19 +145,16 @@ except ImportError:
             compare_to_consensus,
             get_mutation_summary_text,
         )
-        from services.benchmark_service import get_cached_benchmark, run_benchmark
-        from services.analytics_service import get_cached_analytics
         from services.prediction_history import (
             add_record,
-            get_history,
-            delete_record,
             clear_history,
+            delete_record,
+            get_history,
             get_statistics,
         )
-        from utils.tokenizer import prepare_model_input, EXPECTED_LENGTH
+        from services.report_generator import generate_prediction_report_pdf
         from utils.disease_mapper import get_disease
-        from services.evidence_builder import build_genomic_evidence
-        from services.blast_service import execute_blast_search
+        from utils.tokenizer import prepare_model_input
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -158,17 +162,14 @@ logger = logging.getLogger(__name__)
 
 class PredictionRequest(BaseModel):
     sequence: str = Field(
-        ...,
-        min_length=1,
-        max_length=2000,
-        description="DNA sequence string (A, T, G, C, N)"
+        ..., min_length=1, max_length=2000, description="DNA sequence string (A, T, G, C, N)"
     )
-
 
 
 # ============================================================
 # Helper
 # ============================================================
+
 
 def _run_model(sequence: str, model: str = "cnn"):
     """Run prediction with the specified model and return extended results."""
@@ -176,14 +177,17 @@ def _run_model(sequence: str, model: str = "cnn"):
 
     if model == "cnn":
         from backend.predictor.cnn_predictor import predict as model_predict
+
         predict_fn = model_predict
         model_name = "CNN"
     elif model == "lstm":
         from backend.predictor.lstm_predictor import predict as model_predict
+
         predict_fn = model_predict
         model_name = "LSTM"
     elif model == "transformer":
         from backend.predictor.transformer_predictor import predict as model_predict
+
         predict_fn = model_predict
         model_name = "Transformer"
     else:
@@ -195,10 +199,12 @@ def _run_model(sequence: str, model: str = "cnn"):
     probabilities = result["probabilities"]
     all_predictions = []
     for label, probability in enumerate(probabilities):
-        all_predictions.append({
-            "disease": get_disease(label),
-            "probability": round(probability * 100, 2),
-        })
+        all_predictions.append(
+            {
+                "disease": get_disease(label),
+                "probability": round(probability * 100, 2),
+            }
+        )
     all_predictions.sort(key=lambda x: x["probability"], reverse=True)
 
     confidence = round(result["confidence"] * 100, 2)
@@ -233,6 +239,7 @@ def _run_model(sequence: str, model: str = "cnn"):
 # Health
 # ============================================================
 
+
 @router.get("/health")
 def health_check():
     return {
@@ -246,6 +253,7 @@ def health_check():
 # ============================================================
 # Predict
 # ============================================================
+
 
 @router.post("/predict")
 async def predict(
@@ -283,9 +291,7 @@ async def predict(
             try:
                 tokens = prepare_model_input(request.sequence)
                 shap_result = compute_shap_values(tokens, model_type=model)
-                explanation = generate_explanation_text(
-                    shap_result, result["predicted_disease"]
-                )
+                explanation = generate_explanation_text(shap_result, result["predicted_disease"])
                 result["shap_explainability"] = shap_result
                 result["shap_explanation"] = explanation
             except Exception as exc:
@@ -338,8 +344,8 @@ async def predict(
         # Save to history via SQLAlchemy ORM
         try:
             import json
-            from datetime import datetime, timezone
             import random
+            from datetime import datetime, timezone
 
             user_ctx = _get_current_user_from_header(authorization, db=db)
             analysis_id = f"ANL-{random.randint(10000, 99999)}"
@@ -357,7 +363,7 @@ async def predict(
                 probability_distribution=json.dumps(result["all_predictions"]),
                 model_version=f"GenomeAI {result['model']} v2.0",
                 analysis_status="completed",
-                analysis_timestamp=datetime.now(timezone.utc)
+                analysis_timestamp=datetime.now(timezone.utc),
             )
             db.add(orm_analysis)
             db.commit()
@@ -379,7 +385,6 @@ async def predict(
 
         return {"success": True, "result": result, "blast": result.get("blast")}
 
-
     except ValueError as e:
         raise HTTPException(status_code=400, detail={"message": str(e)})
     except FileNotFoundError as e:
@@ -393,10 +398,10 @@ async def predict(
         )
 
 
-
 # ============================================================
 # Predict — Extended (full suite: predict + mutation + shap + blast)
 # ============================================================
+
 
 @router.post("/predict/extended")
 async def predict_extended(
@@ -442,9 +447,7 @@ async def predict_extended(
         # SHAP explainability
         try:
             shap_result = compute_shap_values(tokens, model_type=model)
-            explanation = generate_explanation_text(
-                shap_result, result["predicted_disease"]
-            )
+            explanation = generate_explanation_text(shap_result, result["predicted_disease"])
             result["shap_explainability"] = shap_result
             result["shap_explanation"] = explanation
         except Exception as exc:
@@ -466,8 +469,10 @@ async def predict_extended(
             }
 
         # AI Insights
-        insights = [f"The {result['model']} model predicted {result['predicted_disease']} "
-                    f"with {result['confidence']}% confidence ({result['confidence_level']})."]
+        insights = [
+            f"The {result['model']} model predicted {result['predicted_disease']} "
+            f"with {result['confidence']}% confidence ({result['confidence_level']})."
+        ]
         if result.get("mutation_summary"):
             insights.append(result["mutation_summary"])
         if result.get("shap_explanation"):
@@ -508,8 +513,11 @@ async def predict_extended(
 # Predict — Standalone BLAST Endpoint
 # ============================================================
 
+
 class BlastRequest(BaseModel):
-    sequence: str = Field(..., min_length=1, max_length=5000, description="DNA sequence string (A, T, G, C, N)")
+    sequence: str = Field(
+        ..., min_length=1, max_length=5000, description="DNA sequence string (A, T, G, C, N)"
+    )
 
 
 @router.post("/predict/blast")
@@ -523,10 +531,10 @@ async def run_blast_alignment(request: BlastRequest):
         raise HTTPException(status_code=500, detail={"message": f"BLAST search failed: {exc}"})
 
 
-
 # ============================================================
 # Predict — Dedicated Evidence Endpoint
 # ============================================================
+
 
 class EvidenceQueryRequest(BaseModel):
     disease_name: str = Field(..., min_length=2, max_length=100)
@@ -547,7 +555,7 @@ async def get_prediction_evidence(request: EvidenceQueryRequest):
             rsid=request.rsid,
         )
         return {"success": True, "evidence": evidence_obj}
-    except Exception as exc:
+    except Exception:
         logger.exception("Failed to build genomic evidence")
         raise HTTPException(status_code=500, detail={"message": "Evidence retrieval failed."})
 
@@ -555,6 +563,7 @@ async def get_prediction_evidence(request: EvidenceQueryRequest):
 # ============================================================
 # Report
 # ============================================================
+
 
 @router.post("/predict/report")
 async def predict_report(
@@ -642,6 +651,7 @@ async def predict_report(
 # Dynamic Model Evaluation Metrics API
 # ============================================================
 
+
 @router.get("/model/metrics")
 def get_model_metrics():
     """Retrieve dynamically generated evaluation metrics of the latest trained model."""
@@ -650,11 +660,7 @@ def get_model_metrics():
         try:
             with open(metrics_path, "r") as f:
                 data = json.load(f)
-            return {
-                "success": True,
-                "available": True,
-                **data
-            }
+            return {"success": True, "available": True, **data}
         except Exception as exc:
             logger.warning(f"Failed to read model_metrics.json: {exc}")
 
@@ -672,13 +678,14 @@ def get_model_metrics():
         "dataset_size": 19984,
         "test_samples": 2998,
         "trained_on": None,
-        "message": "CNN ACCURACY: Not Available"
+        "message": "CNN ACCURACY: Not Available",
     }
 
 
 # ============================================================
 # Benchmark
 # ============================================================
+
 
 @router.get("/benchmark")
 def benchmark(
@@ -699,6 +706,7 @@ def benchmark(
 def refresh_benchmark():
     """Force re-run benchmark and update cache."""
     from backend.services.benchmark_service import clear_cache, run_benchmark
+
     try:
         clear_cache()
         results = run_benchmark("all", sample_size=200)
@@ -711,6 +719,7 @@ def refresh_benchmark():
 # ============================================================
 # Analytics
 # ============================================================
+
 
 @router.get("/analytics")
 def analytics():
@@ -725,6 +734,7 @@ def analytics():
 # ============================================================
 # History
 # ============================================================
+
 
 @router.get("/history")
 def history(
@@ -742,11 +752,15 @@ def history(
             model_filter=model_filter,
             disease_filter=disease_filter,
         )
-        logger.info(f"[API /history Debug] Returned {len(data.get('records', []))} records (Total: {data.get('total')}) from DB: {data.get('db_path')}")
+        logger.info(
+            f"[API /history Debug] Returned {len(data.get('records', []))} records (Total: {data.get('total')}) from DB: {data.get('db_path')}"
+        )
         return data
     except Exception as exc:
         logger.exception("History fetch failed")
-        raise HTTPException(status_code=500, detail={"message": f"Database operation failed: {str(exc)}"})
+        raise HTTPException(
+            status_code=500, detail={"message": f"Database operation failed: {str(exc)}"}
+        )
 
 
 @router.delete("/history/{record_id}")
@@ -767,6 +781,7 @@ def clear_all_history():
 # Admin Statistics
 # ============================================================
 
+
 @router.get("/admin/stats")
 def admin_statistics():
     try:
@@ -781,7 +796,10 @@ def admin_statistics():
 # LIS Auth & Multi-Tenant Routes
 # ============================================================
 
-def _get_current_user_from_header(authorization: Optional[str] = Header(None), db: Session = None) -> dict:
+
+def _get_current_user_from_header(
+    authorization: Optional[str] = Header(None), db: Session = None
+) -> dict:
     own_db = False
     if db is None:
         db = next(get_db())
@@ -792,11 +810,21 @@ def _get_current_user_from_header(authorization: Optional[str] = Header(None), d
             user = db.query(User).filter(User.email == "admin@genomeai.lab").first()
             if not user:
                 # Seed default lab and admin if missing
-                lab = Laboratory(laboratory_name="Central Genomics Institute", registration_number="LAB-CENTRAL-01", email="info@genomeai.lab")
+                lab = Laboratory(
+                    laboratory_name="Central Genomics Institute",
+                    registration_number="LAB-CENTRAL-01",
+                    email="info@genomeai.lab",
+                )
                 db.add(lab)
                 db.commit()
                 db.refresh(lab)
-                user = User(lab_id=lab.lab_id, email="admin@genomeai.lab", full_name="Dr. Sarah Jenkins", password_hash=get_password_hash("admin123"), role="Administrator")
+                user = User(
+                    lab_id=lab.lab_id,
+                    email="admin@genomeai.lab",
+                    full_name="Dr. Sarah Jenkins",
+                    password_hash=get_password_hash("admin123"),
+                    role="Administrator",
+                )
                 db.add(user)
                 db.commit()
                 db.refresh(user)
@@ -813,17 +841,21 @@ def _get_current_user_from_header(authorization: Optional[str] = Header(None), d
                     "id": lab.lab_id if lab else 1,
                     "name": lab.laboratory_name if lab else "Central Genomics Institute",
                     "lab_code": lab.registration_number if lab else "LAB-CENTRAL-01",
-                }
+                },
             }
 
         token = authorization.split(" ")[1]
         payload = decode_access_token(token)
         if not payload:
-            raise HTTPException(status_code=401, detail={"message": "Invalid or expired JWT token."})
+            raise HTTPException(
+                status_code=401, detail={"message": "Invalid or expired JWT token."}
+            )
 
         user = db.query(User).filter(User.email == payload.get("email", "")).first()
         if not user:
-            raise HTTPException(status_code=401, detail={"message": "User account no longer exists."})
+            raise HTTPException(
+                status_code=401, detail={"message": "User account no longer exists."}
+            )
 
         lab = db.query(Laboratory).filter(Laboratory.lab_id == user.lab_id).first()
         return {
@@ -837,7 +869,7 @@ def _get_current_user_from_header(authorization: Optional[str] = Header(None), d
                 "id": lab.lab_id if lab else user.lab_id,
                 "name": lab.laboratory_name if lab else "Laboratory",
                 "lab_code": lab.registration_number if lab else "LAB-01",
-            }
+            },
         }
     finally:
         if own_db:
@@ -849,7 +881,9 @@ def register_laboratory_and_admin(req: RegisterLabRequest, db: Session = Depends
     """Registers a new laboratory and creates its Administrator account using SQLAlchemy ORM."""
     existing_user = db.query(User).filter(User.email == req.admin_email).first()
     if existing_user:
-        raise HTTPException(status_code=400, detail={"message": "An account with this email already exists."})
+        raise HTTPException(
+            status_code=400, detail={"message": "An account with this email already exists."}
+        )
 
     try:
         lab = Laboratory(
@@ -857,7 +891,7 @@ def register_laboratory_and_admin(req: RegisterLabRequest, db: Session = Depends
             laboratory_name=req.lab_name,
             registration_number=req.lab_code,
             email=req.admin_email,
-            address=req.institution or ""
+            address=req.institution or "",
         )
         db.add(lab)
         db.commit()
@@ -868,13 +902,15 @@ def register_laboratory_and_admin(req: RegisterLabRequest, db: Session = Depends
             email=req.admin_email,
             full_name=req.admin_name,
             password_hash=get_password_hash(req.admin_password),
-            role="Administrator"
+            role="Administrator",
         )
         db.add(user)
         db.commit()
         db.refresh(user)
 
-        token = create_access_token({"sub": str(user.user_id), "email": user.email, "role": user.role, "lab_id": lab.lab_id})
+        token = create_access_token(
+            {"sub": str(user.user_id), "email": user.email, "role": user.role, "lab_id": lab.lab_id}
+        )
 
         return {
             "success": True,
@@ -890,12 +926,14 @@ def register_laboratory_and_admin(req: RegisterLabRequest, db: Session = Depends
                 "id": lab.lab_id,
                 "name": lab.laboratory_name,
                 "lab_code": lab.registration_number,
-            }
+            },
         }
     except Exception as e:
         db.rollback()
         logger.exception("Lab registration failed")
-        raise HTTPException(status_code=500, detail={"message": str(e) or "Failed to register laboratory."})
+        raise HTTPException(
+            status_code=500, detail={"message": str(e) or "Failed to register laboratory."}
+        )
 
 
 @router.post("/auth/login")
@@ -903,10 +941,14 @@ def login_user(req: LoginRequest, db: Session = Depends(get_db)):
     """Authenticates laboratory user via SQLAlchemy ORM and returns JWT bearer token."""
     user = db.query(User).filter(User.email == req.email.strip().lower()).first()
     if not user or not verify_password(req.password, user.password_hash):
-        raise HTTPException(status_code=401, detail={"message": "Invalid email address or password."})
+        raise HTTPException(
+            status_code=401, detail={"message": "Invalid email address or password."}
+        )
 
     lab = db.query(Laboratory).filter(Laboratory.lab_id == user.lab_id).first()
-    token = create_access_token({"sub": str(user.user_id), "email": user.email, "role": user.role, "lab_id": user.lab_id})
+    token = create_access_token(
+        {"sub": str(user.user_id), "email": user.email, "role": user.role, "lab_id": user.lab_id}
+    )
 
     return {
         "success": True,
@@ -922,12 +964,14 @@ def login_user(req: LoginRequest, db: Session = Depends(get_db)):
             "id": lab.lab_id if lab else user.lab_id,
             "name": lab.laboratory_name if lab else "Laboratory",
             "lab_code": lab.registration_number if lab else "LAB-01",
-        }
+        },
     }
 
 
 @router.get("/auth/me")
-def get_current_user_profile(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
+def get_current_user_profile(
+    authorization: Optional[str] = Header(None), db: Session = Depends(get_db)
+):
     """Returns current logged-in user profile & lab details."""
     user = _get_current_user_from_header(authorization, db=db)
     return {
@@ -938,12 +982,16 @@ def get_current_user_profile(authorization: Optional[str] = Header(None), db: Se
             "full_name": user["full_name"],
             "role": user["role"],
         },
-        "laboratory": user.get("laboratory")
+        "laboratory": user.get("laboratory"),
     }
 
 
 @router.post("/auth/change-password")
-def change_password(req: ChangePasswordRequest, authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
+def change_password(
+    req: ChangePasswordRequest,
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
     """Changes password for logged in user using SQLAlchemy ORM."""
     current_user = _get_current_user_from_header(authorization, db=db)
     if not verify_password(req.old_password, current_user["password_hash"]):
@@ -962,13 +1010,21 @@ def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
     """Generates password reset acknowledgment for LIS user."""
     user = db.query(User).filter(User.email == req.email.strip().lower()).first()
     if not user:
-        return {"success": True, "message": "If an account exists, password reset instructions have been sent."}
+        return {
+            "success": True,
+            "message": "If an account exists, password reset instructions have been sent.",
+        }
 
-    return {"success": True, "message": "Password reset request recorded. Contact your LIS Laboratory Manager."}
+    return {
+        "success": True,
+        "message": "Password reset request recorded. Contact your LIS Laboratory Manager.",
+    }
 
 
 @router.get("/lis/users")
-def get_laboratory_users(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
+def get_laboratory_users(
+    authorization: Optional[str] = Header(None), db: Session = Depends(get_db)
+):
     """Lists users belonging to logged-in user's laboratory."""
     current_user = _get_current_user_from_header(authorization, db=db)
     users = db.query(User).filter(User.lab_id == current_user["lab_id"]).all()
@@ -979,7 +1035,7 @@ def get_laboratory_users(authorization: Optional[str] = Header(None), db: Sessio
             "email": u.email,
             "full_name": u.full_name,
             "role": u.role,
-            "created_at": u.created_at.isoformat() if u.created_at else None
+            "created_at": u.created_at.isoformat() if u.created_at else None,
         }
         for u in users
     ]
@@ -987,22 +1043,33 @@ def get_laboratory_users(authorization: Optional[str] = Header(None), db: Sessio
 
 
 @router.post("/lis/users")
-def create_laboratory_user(req: CreateUserRequest, authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
+def create_laboratory_user(
+    req: CreateUserRequest,
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
     """Creates a new user in current laboratory (Admin / Lab Manager only)."""
     current_user = _get_current_user_from_header(authorization, db=db)
     if current_user["role"] not in {"Administrator", "Laboratory Manager"}:
-        raise HTTPException(status_code=403, detail={"message": "Permission denied. Only Administrators and Laboratory Managers can add users."})
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "message": "Permission denied. Only Administrators and Laboratory Managers can add users."
+            },
+        )
 
     existing = db.query(User).filter(User.email == req.email.strip().lower()).first()
     if existing:
-        raise HTTPException(status_code=400, detail={"message": "A user with this email already exists."})
+        raise HTTPException(
+            status_code=400, detail={"message": "A user with this email already exists."}
+        )
 
     new_user = User(
         lab_id=current_user["lab_id"],
         email=req.email.strip().lower(),
         full_name=req.full_name,
         password_hash=get_password_hash(req.password),
-        role=req.role
+        role=req.role,
     )
     db.add(new_user)
     db.commit()
@@ -1016,19 +1083,28 @@ def create_laboratory_user(req: CreateUserRequest, authorization: Optional[str] 
             "email": new_user.email,
             "full_name": new_user.full_name,
             "role": new_user.role,
-            "created_at": new_user.created_at.isoformat() if new_user.created_at else None
-        }
+            "created_at": new_user.created_at.isoformat() if new_user.created_at else None,
+        },
     }
 
 
 @router.delete("/lis/users/{user_id}")
-def remove_laboratory_user(user_id: int, authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
+def remove_laboratory_user(
+    user_id: int, authorization: Optional[str] = Header(None), db: Session = Depends(get_db)
+):
     """Deletes a laboratory user (Admin only)."""
     current_user = _get_current_user_from_header(authorization, db=db)
     if current_user["role"] != "Administrator":
-        raise HTTPException(status_code=403, detail={"message": "Permission denied. Only Administrators can delete users."})
+        raise HTTPException(
+            status_code=403,
+            detail={"message": "Permission denied. Only Administrators can delete users."},
+        )
 
-    db_user = db.query(User).filter(User.user_id == user_id, User.lab_id == current_user["lab_id"]).first()
+    db_user = (
+        db.query(User)
+        .filter(User.user_id == user_id, User.lab_id == current_user["lab_id"])
+        .first()
+    )
     if not db_user:
         raise HTTPException(status_code=404, detail={"message": "User not found."})
 
@@ -1038,7 +1114,9 @@ def remove_laboratory_user(user_id: int, authorization: Optional[str] = Header(N
 
 
 @router.get("/lis/lab")
-def get_laboratory_details(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
+def get_laboratory_details(
+    authorization: Optional[str] = Header(None), db: Session = Depends(get_db)
+):
     """Returns details of current logged-in laboratory."""
     current_user = _get_current_user_from_header(authorization, db=db)
     lab = db.query(Laboratory).filter(Laboratory.lab_id == current_user["lab_id"]).first()
@@ -1052,8 +1130,6 @@ def get_laboratory_details(authorization: Optional[str] = Header(None), db: Sess
             "name": lab.laboratory_name,
             "lab_code": lab.registration_number,
             "institution": lab.address or "",
-            "created_at": lab.created_at.isoformat() if lab.created_at else None
-        }
+            "created_at": lab.created_at.isoformat() if lab.created_at else None,
+        },
     }
-
-

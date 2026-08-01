@@ -3,9 +3,9 @@
 Uses a simplified integrated-gradients approach that works with TensorFlow
 and PyTorch models to identify influential nucleotide positions.
 """
+
 from __future__ import annotations
 
-import time
 from pathlib import Path
 
 import numpy as np
@@ -33,13 +33,15 @@ def _token_to_base(tok: int) -> str:
 def _predict_proba_cnn(tokens_batch: np.ndarray) -> np.ndarray:
     """Wrapper so we can call the CNN predictor on a batch."""
     from backend.predictor.cnn_predictor import get_model
+
     model = get_model()
     return model.predict(tokens_batch, verbose=0)
 
 
 def _predict_proba_transformer(tokens_batch: np.ndarray) -> np.ndarray:
     """Wrapper for Transformer batch inference."""
-    from backend.predictor.transformer_predictor import load_resources, _tokens_to_string
+    from backend.predictor.transformer_predictor import _tokens_to_string, load_resources
+
     model, tokenizer = load_resources()
     import torch
 
@@ -60,7 +62,6 @@ def _predict_proba_transformer(tokens_batch: np.ndarray) -> np.ndarray:
 
     probs = torch.softmax(logits, dim=-1).cpu().numpy()
     return probs
-
 
 
 def compute_shap_values(
@@ -112,7 +113,6 @@ def compute_shap_values(
 
     importances /= num_perturbations
 
-
     # Convert to absolute values for importance ranking
     abs_importances = np.abs(importances)
 
@@ -159,7 +159,7 @@ def compute_shap_values(
                 "start": int(r[0]),
                 "end": int(r[1]),
                 "score": round(r[2], 6),
-                "sequence": "".join(nucleotides[r[0]:r[1] + 1]),
+                "sequence": "".join(nucleotides[r[0] : r[1] + 1]),
             }
             for r in regions[:5]
         ],
@@ -178,6 +178,7 @@ def _predict_proba_tc(tokens: np.ndarray, model_type: str) -> np.ndarray:
         return _predict_proba_transformer(tokens)
     elif model_type.lower() == "lstm":
         from backend.predictor.lstm_predictor import get_model
+
         model = get_model()
         return model.predict(tokens, verbose=0)
     else:
@@ -188,7 +189,9 @@ def generate_explanation_text(shap_result: dict, disease_name: str) -> str:
     """Generate a human-readable explanation from SHAP results."""
     regions = shap_result.get("top_influential_regions", [])
     if not regions:
-        return f"The model's prediction for {disease_name} is based on the overall sequence pattern."
+        return (
+            f"The model's prediction for {disease_name} is based on the overall sequence pattern."
+        )
 
     top = regions[0]
     explanation = (

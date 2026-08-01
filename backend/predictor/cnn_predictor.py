@@ -48,7 +48,6 @@ def predict(tokens: np.ndarray):
     }
 
 
-
 def reset_model_cache():
     global _MODEL
 

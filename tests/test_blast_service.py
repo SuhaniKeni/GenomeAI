@@ -12,12 +12,13 @@ Tests:
 - Response formatting
 - Async execute_blast_search with timeout/failure protection
 """
+
 from __future__ import annotations
 
 import asyncio
-import os
 import sys
 from pathlib import Path
+
 import pytest
 
 # Ensure root workspace directory is in sys.path
@@ -26,12 +27,10 @@ if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
 from backend.services.blast_service import (
-    validate_blast_sequence,
-    parse_results,
-    format_response,
     execute_blast_search,
-    BLAST_PROGRAM,
-    BLAST_DATABASE,
+    format_response,
+    parse_results,
+    validate_blast_sequence,
 )
 
 SAMPLE_VALID_XML = """<?xml version="1.0"?>
@@ -235,6 +234,15 @@ def test_execute_blast_search_invalid_dna():
 
 def test_execute_blast_search_timeout_fallback(monkeypatch):
     """Test timeout fallback protection when NCBI server hangs."""
+
+    def mock_run_blast(seq):
+        import time
+
+        time.sleep(0.01)
+        return ""
+
+    monkeypatch.setattr("backend.services.blast_service.run_blast", mock_run_blast)
+
     async def mock_wait_for(*args, **kwargs):
         raise asyncio.TimeoutError()
 

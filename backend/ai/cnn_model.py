@@ -1,6 +1,7 @@
 import os
 import sys
 from pathlib import Path
+
 import numpy as np
 import tensorflow as tf
 
@@ -10,35 +11,33 @@ if str(BASE_DIR) not in sys.path:
 if str(Path(__file__).resolve().parent) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import (
-    Input,
-    Embedding,
-    Conv1D,
-    BatchNormalization,
-    MaxPooling1D,
-    GlobalMaxPooling1D,
-    GlobalAveragePooling1D,
-    Concatenate,
-    Dense,
-    Dropout,
-    Add,
-    Activation,
-    Reshape,
-    Multiply,
-)
-from tensorflow.keras.utils import to_categorical
+from class_weights import get_class_weights
+from data_loader import load_data
+from sklearn.metrics import accuracy_score, f1_score
 from tensorflow.keras.callbacks import (
     EarlyStopping,
     ModelCheckpoint,
     ReduceLROnPlateau,
 )
+from tensorflow.keras.layers import (
+    Activation,
+    Add,
+    BatchNormalization,
+    Concatenate,
+    Conv1D,
+    Dense,
+    Dropout,
+    Embedding,
+    GlobalAveragePooling1D,
+    GlobalMaxPooling1D,
+    Input,
+    MaxPooling1D,
+    Multiply,
+    Reshape,
+)
+from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
-from sklearn.model_selection import StratifiedKFold
-from sklearn.metrics import accuracy_score, f1_score
-
-from data_loader import load_data, load_full_dataset
-from class_weights import get_class_weights
+from tensorflow.keras.utils import to_categorical
 
 os.makedirs(BASE_DIR / "trained_models", exist_ok=True)
 
@@ -99,12 +98,16 @@ def build_se_rescnn_model(input_length=201, num_classes=10, embed_dim=64):
     x_pool = Concatenate()([g_max, g_avg])
 
     # 6. Regularized Dense Classification Head
-    x_head = Dense(256, kernel_regularizer=tf.keras.regularizers.l2(1e-4), kernel_initializer="he_normal")(x_pool)
+    x_head = Dense(
+        256, kernel_regularizer=tf.keras.regularizers.l2(1e-4), kernel_initializer="he_normal"
+    )(x_pool)
     x_head = BatchNormalization()(x_head)
     x_head = Activation("swish")(x_head)
     x_head = Dropout(0.35)(x_head)
 
-    x_head = Dense(128, kernel_regularizer=tf.keras.regularizers.l2(1e-4), kernel_initializer="he_normal")(x_head)
+    x_head = Dense(
+        128, kernel_regularizer=tf.keras.regularizers.l2(1e-4), kernel_initializer="he_normal"
+    )(x_head)
     x_head = BatchNormalization()(x_head)
     x_head = Activation("swish")(x_head)
     x_head = Dropout(0.25)(x_head)
@@ -114,11 +117,7 @@ def build_se_rescnn_model(input_length=201, num_classes=10, embed_dim=64):
     model = Model(inputs=inputs, outputs=outputs, name="GenomeAI_Optimized_SE_ResCNN")
 
     optimizer = Adam(learning_rate=1e-3, clipnorm=1.0)
-    model.compile(
-        optimizer=optimizer,
-        loss="categorical_crossentropy",
-        metrics=["accuracy"]
-    )
+    model.compile(optimizer=optimizer, loss="categorical_crossentropy", metrics=["accuracy"])
 
     return model
 

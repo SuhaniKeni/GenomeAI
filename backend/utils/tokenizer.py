@@ -1,4 +1,5 @@
 import re
+
 import numpy as np
 
 TOKEN_MAP = {
@@ -74,14 +75,16 @@ def generate_windows(sequence: str, window_size: int = 201, stride: int = 25) ->
     seq_len = len(cleaned)
 
     if seq_len == window_size:
-        return [{
-            "index": 1,
-            "start": 0,
-            "end": window_size,
-            "start_1based": 1,
-            "end_1based": window_size,
-            "sequence": cleaned,
-        }]
+        return [
+            {
+                "index": 1,
+                "start": 0,
+                "end": window_size,
+                "start_1based": 1,
+                "end_1based": window_size,
+                "sequence": cleaned,
+            }
+        ]
 
     windows = []
     start = 0
@@ -89,14 +92,16 @@ def generate_windows(sequence: str, window_size: int = 201, stride: int = 25) ->
 
     while start + window_size <= seq_len:
         end = start + window_size
-        windows.append({
-            "index": win_idx,
-            "start": start,
-            "end": end,
-            "start_1based": start + 1,
-            "end_1based": end,
-            "sequence": cleaned[start:end],
-        })
+        windows.append(
+            {
+                "index": win_idx,
+                "start": start,
+                "end": end,
+                "start_1based": start + 1,
+                "end_1based": end,
+                "sequence": cleaned[start:end],
+            }
+        )
         start += stride
         win_idx += 1
 
@@ -104,19 +109,23 @@ def generate_windows(sequence: str, window_size: int = 201, stride: int = 25) ->
     if windows and windows[-1]["end"] < seq_len:
         start = seq_len - window_size
         end = seq_len
-        windows.append({
-            "index": win_idx,
-            "start": start,
-            "end": end,
-            "start_1based": start + 1,
-            "end_1based": end,
-            "sequence": cleaned[start:end],
-        })
+        windows.append(
+            {
+                "index": win_idx,
+                "start": start,
+                "end": end,
+                "start_1based": start + 1,
+                "end_1based": end,
+                "sequence": cleaned[start:end],
+            }
+        )
 
     return windows
 
 
-def prepare_multi_window_input(sequence: str, window_size: int = 201, stride: int = 25) -> tuple[np.ndarray, list[dict]]:
+def prepare_multi_window_input(
+    sequence: str, window_size: int = 201, stride: int = 25
+) -> tuple[np.ndarray, list[dict]]:
     """Tokenize sliding windows for multi-window batch inference."""
     windows = generate_windows(sequence, window_size=window_size, stride=stride)
     tokens_list = [tokenize_sequence(w["sequence"], strict=True) for w in windows]
@@ -138,4 +147,3 @@ def prepare_model_input(sequence: str) -> np.ndarray:
     tokens = tokenize_sequence(cleaned_sequence, strict=True)
 
     return np.expand_dims(tokens, axis=0)
-

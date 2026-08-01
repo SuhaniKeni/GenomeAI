@@ -3,6 +3,7 @@
 Loads the fine-tuned Nucleotide Transformer model and runs inference.
 Expects the same integer-encoded tokenization as CNN (A=0, T=1, G=2, C=3, N=4).
 """
+
 from __future__ import annotations
 
 import time
@@ -57,7 +58,6 @@ def load_resources():
         strict=False,
     )
     print(f"Transformer: loaded fine-tuned weights from {MODEL_PATH}")
-
 
     _MODEL.to(device)
     _MODEL.eval()

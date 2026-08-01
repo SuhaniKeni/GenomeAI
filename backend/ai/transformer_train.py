@@ -1,22 +1,19 @@
 from pathlib import Path
 
-import torch
 import pandas as pd
-
+import torch
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
-
-from transformers import (
-    AutoTokenizer,
-    AutoModelForSequenceClassification,
-    AdamW,
-    get_linear_schedule_with_warmup,
-)
-
 from transformer_dataset import DNADataset
 from transformer_utils import (
     train_one_epoch,
     validate_one_epoch,
+)
+from transformers import (
+    AdamW,
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+    get_linear_schedule_with_warmup,
 )
 
 # ============================================================
@@ -30,9 +27,7 @@ MODEL_DIR.mkdir(exist_ok=True)
 
 MODEL_NAME = "InstaDeepAI/nucleotide-transformer-v2-50m-multi-species"
 
-device = torch.device(
-    "cuda" if torch.cuda.is_available() else "cpu"
-)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 print(f"Using device: {device}")
 
@@ -42,9 +37,7 @@ print(f"Using device: {device}")
 
 print("\nLoading dataset...")
 
-df = pd.read_csv(
-    BASE_DIR / "datasets" / "processed" / "ai_training_dataset.csv"
-)
+df = pd.read_csv(BASE_DIR / "datasets" / "processed" / "ai_training_dataset.csv")
 
 print(df.head())
 
@@ -54,10 +47,7 @@ print(df.head())
 
 print("\nLoading tokenizer...")
 
-tokenizer = AutoTokenizer.from_pretrained(
-    MODEL_NAME,
-    trust_remote_code=True
-)
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, trust_remote_code=True)
 
 # ============================================================
 # Prepare Data
@@ -67,36 +57,16 @@ sequences = df["MutatedSequence"].tolist()
 labels = df["Label"].tolist()
 
 X_train, X_test, y_train, y_test = train_test_split(
-    sequences,
-    labels,
-    test_size=0.2,
-    random_state=42,
-    stratify=labels
+    sequences, labels, test_size=0.2, random_state=42, stratify=labels
 )
 
-train_dataset = DNADataset(
-    X_train,
-    y_train,
-    tokenizer
-)
+train_dataset = DNADataset(X_train, y_train, tokenizer)
 
-test_dataset = DNADataset(
-    X_test,
-    y_test,
-    tokenizer
-)
+test_dataset = DNADataset(X_test, y_test, tokenizer)
 
-train_loader = DataLoader(
-    train_dataset,
-    batch_size=16,
-    shuffle=True
-)
+train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
 
-test_loader = DataLoader(
-    test_dataset,
-    batch_size=16,
-    shuffle=False
-)
+test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
 
 print(f"\nTraining samples : {len(train_dataset)}")
 print(f"Testing samples  : {len(test_dataset)}")
@@ -108,9 +78,7 @@ print(f"Testing samples  : {len(test_dataset)}")
 print("\nLoading Transformer Model...")
 
 model = AutoModelForSequenceClassification.from_pretrained(
-    MODEL_NAME,
-    num_labels=8,
-    trust_remote_code=True
+    MODEL_NAME, num_labels=8, trust_remote_code=True
 )
 
 # ============================================================
@@ -125,18 +93,11 @@ model.to(device)
 
 print(f"Device : {device}")
 print("Transformer loaded successfully!")
-optimizer = AdamW(
-    filter(lambda p: p.requires_grad, model.parameters()),
-    lr=2e-4
-)
+optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=2e-4)
 
-trainable_params = sum(
-    p.numel() for p in model.parameters() if p.requires_grad
-)
+trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
-total_params = sum(
-    p.numel() for p in model.parameters()
-)
+total_params = sum(p.numel() for p in model.parameters())
 
 print(f"\nTrainable Parameters: {trainable_params:,}")
 print(f"Total Parameters    : {total_params:,}")
@@ -146,9 +107,7 @@ epochs = 5
 total_steps = len(train_loader) * epochs
 
 scheduler = get_linear_schedule_with_warmup(
-    optimizer,
-    num_warmup_steps=0,
-    num_training_steps=total_steps
+    optimizer, num_warmup_steps=0, num_training_steps=total_steps
 )
 
 best_accuracy = 0
@@ -198,18 +157,10 @@ for epoch in range(epochs):
 
         best_accuracy = validation_accuracy
 
-        torch.save(
-            model.state_dict(),
-            MODEL_DIR / "best_transformer_model.pth"
-        )
+        torch.save(model.state_dict(), MODEL_DIR / "best_transformer_model.pth")
 
         print("Best model saved.")
 
-torch.save(
-    model.state_dict(),
-    MODEL_DIR / "transformer_model.pth"
-)
+torch.save(model.state_dict(), MODEL_DIR / "transformer_model.pth")
 
 print("\nTransformer training completed successfully!")
-        
-

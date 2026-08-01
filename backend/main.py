@@ -1,6 +1,7 @@
 import logging
 import os
 from pathlib import Path
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -8,18 +9,19 @@ from fastapi.staticfiles import StaticFiles
 
 try:
     from backend.api.routes import router
-    from backend.database.connection import init_db, SessionLocal
+    from backend.database.connection import SessionLocal, init_db
     from backend.database.crud import seed_initial_data
     from backend.services.model_loader import preload_models
 except ImportError:
     try:
-        from .api.routes import router
-        from database.connection import init_db, SessionLocal
+        from database.connection import SessionLocal, init_db
         from database.crud import seed_initial_data
         from services.model_loader import preload_models
+
+        from .api.routes import router
     except ImportError:
         from api.routes import router
-        from database.connection import init_db, SessionLocal
+        from database.connection import SessionLocal, init_db
         from database.crud import seed_initial_data
         from services.model_loader import preload_models
 
@@ -33,7 +35,7 @@ FRONTEND_INDEX = FRONTEND_DIST_DIR / "index.html"
 app = FastAPI(
     title="GenomeAI Enterprise LIS API",
     version="1.0.0",
-    description="DNA Disease Prediction & Enterprise Laboratory Information System (LIS)"
+    description="DNA Disease Prediction & Enterprise Laboratory Information System (LIS)",
 )
 
 # CORS configuration for Render single-domain and local dev
@@ -75,7 +77,7 @@ def health_check():
         "service": "GenomeAI LIS Engine",
         "version": "1.0.0",
         "database": "PostgreSQL",
-        "model": "GenomeAI 1D-CNN v2.0"
+        "model": "GenomeAI 1D-CNN v2.0",
     }
 
 
@@ -99,8 +101,15 @@ async def serve_single_page_app(full_path: str, request: Request):
     """
     # Exclude API endpoints, Swagger UI, and OpenAPI schema
     api_prefixes = ("api/", "api", "health", "docs", "openapi.json", "redoc")
-    if full_path.startswith(api_prefixes) or full_path in ("health", "docs", "openapi.json", "redoc"):
-        return JSONResponse(status_code=404, content={"detail": f"API Endpoint '{full_path}' not found."})
+    if full_path.startswith(api_prefixes) or full_path in (
+        "health",
+        "docs",
+        "openapi.json",
+        "redoc",
+    ):
+        return JSONResponse(
+            status_code=404, content={"detail": f"API Endpoint '{full_path}' not found."}
+        )
 
     # Serve static root files if present (e.g., favicon.ico, dna-hero.svg)
     file_path = FRONTEND_DIST_DIR / full_path

@@ -1,12 +1,13 @@
 import sys
 from pathlib import Path
+
 import numpy as np
 import tensorflow as tf
 from sklearn.metrics import (
-    classification_report,
-    confusion_matrix,
     accuracy_score,
     balanced_accuracy_score,
+    classification_report,
+    confusion_matrix,
     precision_recall_fscore_support,
 )
 
@@ -17,6 +18,7 @@ if str(Path(__file__).resolve().parent) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from data_loader import load_data
+
 from backend.utils.disease_mapper import LABELS
 
 MODEL_PATH = BASE_DIR / "trained_models" / "best_cnn_model.keras"
@@ -40,8 +42,12 @@ def evaluate_cnn_performance():
     # 3. Comprehensive Metrics
     acc = accuracy_score(y_test, y_pred)
     bal_acc = balanced_accuracy_score(y_test, y_pred)
-    prec_macro, rec_macro, f1_macro, _ = precision_recall_fscore_support(y_test, y_pred, average="macro")
-    prec_weight, rec_weight, f1_weight, _ = precision_recall_fscore_support(y_test, y_pred, average="weighted")
+    prec_macro, rec_macro, f1_macro, _ = precision_recall_fscore_support(
+        y_test, y_pred, average="macro"
+    )
+    prec_weight, rec_weight, f1_weight, _ = precision_recall_fscore_support(
+        y_test, y_pred, average="weighted"
+    )
 
     cm = confusion_matrix(y_test, y_pred)
 
@@ -74,9 +80,15 @@ def evaluate_cnn_performance():
     print("=" * 60)
     print(f"{'Metric':<25} | {'Original Model':<15} | {'Improved SE-ResCNN':<18} | {'Delta':<10}")
     print("-" * 75)
-    print(f"{'Test Accuracy':<25} | {'59.61%':<15} | {f'{acc*100:.2f}%':<18} | {f'{acc*100 - 59.61:+.2f}%':<10}")
-    print(f"{'Macro F1 Score':<25} | {'35.52%':<15} | {f'{f1_macro*100:.2f}%':<18} | {f'{f1_macro*100 - 35.52:+.2f}%':<10}")
-    print(f"{'Weighted F1 Score':<25} | {'53.78%':<15} | {f'{f1_weight*100:.2f}%':<18} | {f'{f1_weight*100 - 53.78:+.2f}%':<10}")
+    print(
+        f"{'Test Accuracy':<25} | {'59.61%':<15} | {f'{acc*100:.2f}%':<18} | {f'{acc*100 - 59.61:+.2f}%':<10}"
+    )
+    print(
+        f"{'Macro F1 Score':<25} | {'35.52%':<15} | {f'{f1_macro*100:.2f}%':<18} | {f'{f1_macro*100 - 35.52:+.2f}%':<10}"
+    )
+    print(
+        f"{'Weighted F1 Score':<25} | {'53.78%':<15} | {f'{f1_weight*100:.2f}%':<18} | {f'{f1_weight*100 - 53.78:+.2f}%':<10}"
+    )
     print("-" * 75)
 
     # 7. Error Analysis
@@ -85,7 +97,9 @@ def evaluate_cnn_performance():
     print("=" * 60)
     misclassified_mask = y_test != y_pred
     num_errors = np.sum(misclassified_mask)
-    print(f"Total Test Set Misclassifications: {num_errors} out of {len(y_test)} samples ({num_errors/len(y_test)*100:.2f}%)")
+    print(
+        f"Total Test Set Misclassifications: {num_errors} out of {len(y_test)} samples ({num_errors/len(y_test)*100:.2f}%)"
+    )
 
     # Find top confused pairs
     pair_counts = {}

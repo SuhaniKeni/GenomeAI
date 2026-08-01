@@ -4,7 +4,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-
 from sklearn.model_selection import train_test_split
 
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -66,7 +65,6 @@ def load_data(clinical_significance_filter=None, return_val=False):
     if clinical_significance_filter:
         df = _filter_by_clinical_significance(df, clinical_significance_filter)
 
-
     # Convert string representation back to Python lists.
     mutated = np.array(df["MutatedTokens"].apply(ast.literal_eval).tolist(), dtype=np.int32)
 
@@ -102,5 +100,3 @@ def load_full_dataset():
     X = np.array(df["MutatedTokens"].apply(ast.literal_eval).tolist(), dtype=np.int32)
     y = df["Label"].values
     return X, y
-
-

@@ -16,9 +16,12 @@ def get_cnn_model():
     if _CNN_MODEL is None:
         model_path = MODEL_DIR / "best_cnn_model.keras"
         if not model_path.exists():
-            logger.warning(f"CNN model weights file not found at {model_path}. Lazy fallback will apply.")
+            logger.warning(
+                f"CNN model weights file not found at {model_path}. Lazy fallback will apply."
+            )
             raise FileNotFoundError(f"CNN model weights not found at {model_path}")
         import tensorflow as tf
+
         _CNN_MODEL = tf.keras.models.load_model(model_path)
         logger.info("✓ TensorFlow CNN model loaded into memory and cached successfully.")
     return _CNN_MODEL
@@ -30,9 +33,12 @@ def get_lstm_model():
     if _LSTM_MODEL is None:
         model_path = MODEL_DIR / "best_lstm_model.keras"
         if not model_path.exists():
-            logger.warning(f"LSTM model weights file not found at {model_path}. Lazy fallback will apply.")
+            logger.warning(
+                f"LSTM model weights file not found at {model_path}. Lazy fallback will apply."
+            )
             raise FileNotFoundError(f"LSTM model weights not found at {model_path}")
         import tensorflow as tf
+
         _LSTM_MODEL = tf.keras.models.load_model(model_path)
         logger.info("✓ TensorFlow LSTM model loaded into memory and cached successfully.")
     return _LSTM_MODEL

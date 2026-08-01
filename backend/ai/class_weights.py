@@ -1,10 +1,9 @@
-from sklearn.utils.class_weight import compute_class_weight
 import numpy as np
 
 
 def get_class_weights(y_train, beta: float = 0.999, max_weight: float = 10.0):
     """Return Effective Number of Samples (ENS) smoothed class weights.
-    
+
     Formula:
       effective_num = (1.0 - beta^n) / (1.0 - beta)
       weight = 1.0 / effective_num
@@ -22,10 +21,7 @@ def get_class_weights(y_train, beta: float = 0.999, max_weight: float = 10.0):
 
     # Normalize weights so mean = 1.0
     mean_w = np.mean(list(weights.values()))
-    class_weights = {
-        cls: float(np.clip(w / mean_w, 0.2, max_weight))
-        for cls, w in weights.items()
-    }
+    class_weights = {cls: float(np.clip(w / mean_w, 0.2, max_weight)) for cls, w in weights.items()}
 
     print("\nClass Distribution & Effective Number of Samples (ENS) Weights")
     print("=" * 60)

@@ -2,28 +2,32 @@
 
 Replaces legacy raw sqlite3 calls with type-safe PostgreSQL / SQLAlchemy ORM operations.
 """
+
 from __future__ import annotations
 
 import json
 import logging
 from collections import Counter
 from datetime import datetime, timedelta, timezone
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
-from sqlalchemy import select, func, or_, delete
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
 try:
     from backend.database.connection import SessionLocal
     from backend.database.models import (
-        Laboratory, User, DNAAnalysis, Report, EvidenceCache, AnalysisHistory
+        AnalysisHistory,
+        DNAAnalysis,
+        EvidenceCache,
+        Laboratory,
+        Report,
+        User,
     )
     from backend.services.auth_service import get_password_hash
 except ImportError:
     from connection import SessionLocal
-    from models import (
-        Laboratory, User, DNAAnalysis, Report, EvidenceCache, AnalysisHistory
-    )
+    from models import AnalysisHistory, EvidenceCache, Laboratory, User
     from services.auth_service import get_password_hash
 
 logger = logging.getLogger("genomeai.crud")
@@ -37,12 +41,15 @@ def current_iso_time():
 # Seed Initial Data (Default Lab & Default Users)
 # ============================================================
 
+
 def seed_initial_data(db: Session) -> None:
     """Seeds default LIS Laboratory and Admin User if database is empty."""
     try:
         lab_count = db.scalar(select(func.count(Laboratory.lab_id)))
         if lab_count == 0:
-            logger.info("Database is empty. Seeding default Central Genomics Institute laboratory & admin users...")
+            logger.info(
+                "Database is empty. Seeding default Central Genomics Institute laboratory & admin users..."
+            )
             default_lab = Laboratory(
                 lab_code="LAB-CENTRAL-01",
                 laboratory_name="Central Genomics Institute",
@@ -93,6 +100,7 @@ def seed_initial_data(db: Session) -> None:
 # User & Auth CRUD
 # ============================================================
 
+
 def get_user_by_email(email: str, db: Optional[Session] = None) -> Optional[Dict[str, Any]]:
     """Fetch user account by email address."""
     close_session = False
@@ -127,7 +135,7 @@ def create_user_record(
     full_name: str,
     password_hash: str,
     role: str,
-    db: Optional[Session] = None
+    db: Optional[Session] = None,
 ) -> Dict[str, Any]:
     """Create new LIS user account inside a laboratory."""
     close_session = False
@@ -218,7 +226,10 @@ def delete_user_by_id(user_id: int, lab_id: int, db: Optional[Session] = None) -
 # Laboratory CRUD
 # ============================================================
 
-def create_laboratory(name: str, lab_code: str, institution: str = "", db: Optional[Session] = None) -> Dict[str, Any]:
+
+def create_laboratory(
+    name: str, lab_code: str, institution: str = "", db: Optional[Session] = None
+) -> Dict[str, Any]:
     """Create a new multi-tenant Laboratory."""
     close_session = False
     if db is None:
@@ -278,6 +289,7 @@ def get_laboratory_by_id(lab_id: int, db: Optional[Session] = None) -> Optional[
 # ============================================================
 # Analysis History CRUD
 # ============================================================
+
 
 def add_history_record(
     sequence: str,
@@ -362,7 +374,9 @@ def get_history_records(
             stmt = stmt.where(func.lower(AnalysisHistory.model) == model_filter.lower())
 
         if disease_filter and isinstance(disease_filter, str):
-            stmt = stmt.where(func.lower(AnalysisHistory.predicted_disease) == disease_filter.lower())
+            stmt = stmt.where(
+                func.lower(AnalysisHistory.predicted_disease) == disease_filter.lower()
+            )
 
         # Total count
         count_stmt = select(func.count()).select_from(stmt.subquery())
@@ -386,21 +400,23 @@ def get_history_records(
             except Exception:
                 blast_obj = None
 
-            records.append({
-                "id": r.id,
-                "timestamp": r.timestamp,
-                "sequence": r.sequence,
-                "predicted_disease": r.predicted_disease,
-                "confidence": r.confidence,
-                "confidence_level": r.confidence_level,
-                "model": r.model,
-                "all_predictions": preds,
-                "sequence_length": r.sequence_length,
-                "inference_time_ms": r.inference_time_ms,
-                "shap_explanation": r.shap_explanation,
-                "mutation_summary": r.mutation_summary,
-                "blast": blast_obj,
-            })
+            records.append(
+                {
+                    "id": r.id,
+                    "timestamp": r.timestamp,
+                    "sequence": r.sequence,
+                    "predicted_disease": r.predicted_disease,
+                    "confidence": r.confidence,
+                    "confidence_level": r.confidence_level,
+                    "model": r.model,
+                    "all_predictions": preds,
+                    "sequence_length": r.sequence_length,
+                    "inference_time_ms": r.inference_time_ms,
+                    "shap_explanation": r.shap_explanation,
+                    "mutation_summary": r.mutation_summary,
+                    "blast": blast_obj,
+                }
+            )
 
         return {
             "success": True,
@@ -513,6 +529,7 @@ def get_history_statistics(db: Optional[Session] = None) -> Dict[str, Any]:
 # Evidence Cache CRUD
 # ============================================================
 
+
 def get_evidence_cache(cache_key: str, db: Optional[Session] = None) -> Optional[dict]:
     """Fetch cached ClinVar / NCBI evidence JSON."""
     if not cache_key:
@@ -523,7 +540,11 @@ def get_evidence_cache(cache_key: str, db: Optional[Session] = None) -> Optional
         close_session = True
 
     try:
-        rec = db.scalar(select(EvidenceCache).where(func.lower(EvidenceCache.cache_key) == cache_key.lower().strip()))
+        rec = db.scalar(
+            select(EvidenceCache).where(
+                func.lower(EvidenceCache.cache_key) == cache_key.lower().strip()
+            )
+        )
         if rec and rec.data_json:
             return json.loads(rec.data_json)
         return None
@@ -535,7 +556,9 @@ def get_evidence_cache(cache_key: str, db: Optional[Session] = None) -> Optional
             db.close()
 
 
-def set_evidence_cache(cache_key: str, category: str, data: dict, db: Optional[Session] = None) -> None:
+def set_evidence_cache(
+    cache_key: str, category: str, data: dict, db: Optional[Session] = None
+) -> None:
     """Store ClinVar / NCBI evidence JSON in persistent database cache."""
     if not cache_key or not data:
         return

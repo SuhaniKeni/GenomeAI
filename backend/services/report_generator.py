@@ -11,6 +11,7 @@ Professional medical report formatting with:
 - QR code (SVG-based)
 - Generated timestamp
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -26,7 +27,9 @@ def _get_reportlab():
     return canvas, letter, HexColor, stringWidth
 
 
-def _draw_wrapped_text(pdf_canvas, text, x, y, max_width, line_height, font_name="Helvetica", font_size=10):
+def _draw_wrapped_text(
+    pdf_canvas, text, x, y, max_width, line_height, font_name="Helvetica", font_size=10
+):
     _, _, _, string_width = _get_reportlab()
     pdf_canvas.setFont(font_name, font_size)
 
@@ -91,7 +94,9 @@ def generate_prediction_report_pdf(
     y -= 10
     pdf.setFont("Helvetica", 7)
     pdf.setFillColor(hex_color("#94A3B8"))
-    pdf.drawRightString(page_width - margin, y, "Report ID: GAI-" + datetime.now().strftime("%Y%m%d%H%M%S"))
+    pdf.drawRightString(
+        page_width - margin, y, "Report ID: GAI-" + datetime.now().strftime("%Y%m%d%H%M%S")
+    )
 
     # Horizontal rule
     y -= 14
@@ -138,7 +143,10 @@ def generate_prediction_report_pdf(
         ("Confidence", f"{prediction_result.get('confidence', 0)}%"),
         ("Confidence Level", prediction_result.get("confidence_level", "Unknown")),
         ("Model Used", prediction_result.get("model", "CNN")),
-        ("Sequence Length", str(prediction_result.get("sequence_length", len(str(sequence).strip())))),
+        (
+            "Sequence Length",
+            str(prediction_result.get("sequence_length", len(str(sequence).strip()))),
+        ),
     ]
 
     col1_x = margin + 16
@@ -259,8 +267,14 @@ def generate_prediction_report_pdf(
                 ("Identity %:", f"{top_hit.get('identity', 0)}%"),
                 ("Query Coverage:", f"{top_hit.get('coverage', 0)}%"),
                 ("Alignment Length:", f"{top_hit.get('alignment_length', 0)} bp"),
-                ("Bit Score / E-value:", f"{top_hit.get('bit_score', 0)} / {top_hit.get('evalue', '0.0')}"),
-                ("Accession / Organism:", f"{top_hit.get('accession', 'N/A')} ({top_hit.get('organism', 'Homo sapiens')})"),
+                (
+                    "Bit Score / E-value:",
+                    f"{top_hit.get('bit_score', 0)} / {top_hit.get('evalue', '0.0')}",
+                ),
+                (
+                    "Accession / Organism:",
+                    f"{top_hit.get('accession', 'N/A')} ({top_hit.get('organism', 'Homo sapiens')})",
+                ),
             ]
 
             for lbl, val in blast_grid:
@@ -283,7 +297,9 @@ def generate_prediction_report_pdf(
         else:
             pdf.setFont("Helvetica", 9)
             pdf.setFillColor(hex_color("#64748B"))
-            err_msg = blast_info.get("error", "No significant sequence alignment matches found in NCBI database.")
+            err_msg = blast_info.get(
+                "error", "No significant sequence alignment matches found in NCBI database."
+            )
             pdf.drawString(b_box_x + 12, b_y, str(err_msg)[:75])
 
         y = b_box_y - b_box_h - 14
@@ -308,8 +324,16 @@ def generate_prediction_report_pdf(
                 "no closely related reference sequence was identified under the selected search parameters."
             )
 
-        y = _draw_wrapped_text(pdf, interp_text, margin + 4, y,
-                               page_width - (2 * margin) - 8, 12, "Helvetica-Oblique", 8.5)
+        y = _draw_wrapped_text(
+            pdf,
+            interp_text,
+            margin + 4,
+            y,
+            page_width - (2 * margin) - 8,
+            12,
+            "Helvetica-Oblique",
+            8.5,
+        )
         y -= 14
 
     # =============================================
@@ -325,8 +349,9 @@ def generate_prediction_report_pdf(
         y -= 8
         pdf.setFillColor(hex_color("#1E293B"))
         pdf.setFont("Helvetica", 10)
-        y = _draw_wrapped_text(pdf, mutation_text, margin + 8, y - 4,
-                               page_width - (2 * margin) - 16, 16)
+        y = _draw_wrapped_text(
+            pdf, mutation_text, margin + 8, y - 4, page_width - (2 * margin) - 16, 16
+        )
         y -= 12
 
     # =============================================
@@ -342,8 +367,9 @@ def generate_prediction_report_pdf(
         y -= 8
         pdf.setFillColor(hex_color("#1E293B"))
         pdf.setFont("Helvetica", 10)
-        y = _draw_wrapped_text(pdf, shap_text, margin + 8, y - 4,
-                               page_width - (2 * margin) - 16, 16)
+        y = _draw_wrapped_text(
+            pdf, shap_text, margin + 8, y - 4, page_width - (2 * margin) - 16, 16
+        )
         y -= 12
 
     # =============================================
@@ -375,15 +401,24 @@ def generate_prediction_report_pdf(
         ev_y = ev_box_y - 16
         pdf.setFont("Helvetica-Bold", 9)
         pdf.setFillColor(hex_color("#166534"))
-        pdf.drawString(ev_box_x + 12, ev_y, f"Evidence Score: {evidence.get('evidence_score', 'Moderate')}")
-        pdf.drawRightString(ev_box_x + ev_box_w - 12, ev_y, f"Sources: {', '.join(evidence.get('sources', ['Local DB']))}")
+        pdf.drawString(
+            ev_box_x + 12, ev_y, f"Evidence Score: {evidence.get('evidence_score', 'Moderate')}"
+        )
+        pdf.drawRightString(
+            ev_box_x + ev_box_w - 12,
+            ev_y,
+            f"Sources: {', '.join(evidence.get('sources', ['Local DB']))}",
+        )
 
         ev_y -= 14
         pdf.setFont("Helvetica", 9)
         pdf.setFillColor(hex_color("#1E293B"))
 
         grid_items = [
-            ("Gene / Symbol:", f"{evidence.get('gene', 'N/A')} ({evidence.get('chromosome', 'chr16')})"),
+            (
+                "Gene / Symbol:",
+                f"{evidence.get('gene', 'N/A')} ({evidence.get('chromosome', 'chr16')})",
+            ),
             ("Coordinates:", evidence.get("gene_coordinates", "N/A")),
             ("Variant:", evidence.get("variant", "SNV")),
             ("Significance:", evidence.get("clinical_significance", "Pathogenic")),
@@ -406,8 +441,16 @@ def generate_prediction_report_pdf(
         if ev_summary:
             pdf.setFillColor(hex_color("#1E293B"))
             pdf.setFont("Helvetica-Oblique", 8.5)
-            y = _draw_wrapped_text(pdf, f"Summary: {ev_summary}", margin + 4, y,
-                                   page_width - (2 * margin) - 8, 12, "Helvetica-Oblique", 8.5)
+            y = _draw_wrapped_text(
+                pdf,
+                f"Summary: {ev_summary}",
+                margin + 4,
+                y,
+                page_width - (2 * margin) - 8,
+                12,
+                "Helvetica-Oblique",
+                8.5,
+            )
             y -= 12
 
     # =============================================
@@ -428,8 +471,7 @@ def generate_prediction_report_pdf(
         y -= 8
         pdf.setFillColor(hex_color("#1E293B"))
         pdf.setFont("Helvetica", 10)
-        y = _draw_wrapped_text(pdf, insights, margin + 8, y - 4,
-                               page_width - (2 * margin) - 16, 16)
+        y = _draw_wrapped_text(pdf, insights, margin + 8, y - 4, page_width - (2 * margin) - 16, 16)
         y -= 14
 
     # =============================================
@@ -450,8 +492,16 @@ def generate_prediction_report_pdf(
         "and should not be used as the sole basis for treatment decisions. Always consult a qualified "
         "healthcare provider for medical advice."
     )
-    dis_y = _draw_wrapped_text(pdf, disclaimer, margin + 4, dis_y - 2,
-                               page_width - (2 * margin) - 8, 11, "Helvetica-Oblique", 7.5)
+    dis_y = _draw_wrapped_text(
+        pdf,
+        disclaimer,
+        margin + 4,
+        dis_y - 2,
+        page_width - (2 * margin) - 8,
+        11,
+        "Helvetica-Oblique",
+        7.5,
+    )
 
     # =============================================
     # FOOTER

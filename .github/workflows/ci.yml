@@ -37,8 +37,9 @@ jobs:
 
       - name: Verify Backend Imports
         run: |
-          python -c "import backend.main; print('✓ backend.main successfully imported')"
-          python -c "from backend.main import app; assert app is not None; print('✓ FastAPI app instance initialized')"
+          python -c "import backend.main; print('[OK] backend.main successfully imported')"
+          python -c "from backend.main import app; assert app is not None; print('[OK] FastAPI app instance initialized')"
+
 
       - name: Run Ruff Linter
         run: |

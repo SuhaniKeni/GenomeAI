@@ -24,7 +24,7 @@ columns = [
     "Stop",
     "ReferenceAllele",
     "AlternateAllele",
-    "ReviewStatus"
+    "ReviewStatus",
 ]
 
 df = df[columns]

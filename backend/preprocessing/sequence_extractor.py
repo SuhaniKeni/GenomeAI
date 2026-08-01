@@ -35,15 +35,12 @@ class SequenceExtractor:
         "22": "NC_000022.11",
         "X": "NC_000023.11",
         "Y": "NC_000024.10",
-        "MT": "NC_012920.1"
+        "MT": "NC_012920.1",
     }
 
     def __init__(self, genome_path):
 
-        self.genome = Fasta(
-            genome_path,
-            sequence_always_upper=True
-        )
+        self.genome = Fasta(genome_path, sequence_always_upper=True)
 
     def chromosome_name(self, chromosome):
 
@@ -69,9 +66,7 @@ class SequenceExtractor:
 
         try:
 
-            sequence = self.genome[
-                chromosome
-            ][start:end].seq.upper()
+            sequence = self.genome[chromosome][start:end].seq.upper()
 
             expected_length = 2 * self.WINDOW_SIZE + 1
             return sequence if len(sequence) == expected_length else None

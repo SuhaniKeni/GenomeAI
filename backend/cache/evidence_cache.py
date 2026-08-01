@@ -3,6 +3,7 @@
 Stores retrieved ClinVar, NCBI, and merged evidence objects in PostgreSQL database cache table
 (via backend/database/crud.py) to minimize external API latency.
 """
+
 from __future__ import annotations
 
 import logging

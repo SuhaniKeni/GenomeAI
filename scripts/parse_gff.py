@@ -9,7 +9,15 @@ print("=" * 60)
 print("PARSING NCBI GFF ANNOTATION")
 print("=" * 60)
 
-gff_file = PROJECT_ROOT / "datasets" / "raw" / "ncbi" / "annotations" / "GCF_000001405.40_GRCh38.p14_genomic.gff" / "GCF_000001405.40_GRCh38.p14_genomic.gff"
+gff_file = (
+    PROJECT_ROOT
+    / "datasets"
+    / "raw"
+    / "ncbi"
+    / "annotations"
+    / "GCF_000001405.40_GRCh38.p14_genomic.gff"
+    / "GCF_000001405.40_GRCh38.p14_genomic.gff"
+)
 
 genes = []
 
@@ -48,14 +56,16 @@ with open(gff_file, "r", encoding="utf-8") as file:
             elif item.startswith("ID="):
                 gene_id = item.replace("ID=", "")
 
-        genes.append({
-            "GeneID": gene_id,
-            "GeneSymbol": gene_name,
-            "Chromosome": seqid,
-            "Start": start,
-            "End": end,
-            "Strand": strand
-        })
+        genes.append(
+            {
+                "GeneID": gene_id,
+                "GeneSymbol": gene_name,
+                "Chromosome": seqid,
+                "Start": start,
+                "End": end,
+                "Strand": strand,
+            }
+        )
 
 gene_df = pd.DataFrame(genes)
 

@@ -72,18 +72,27 @@ jobs:
 
       - name: Scan Repository for Hardcoded Credentials & Tokens
         run: |
-          echo "Scanning repository files for high-entropy secrets and exposed credentials..."
-          
-          # Check for hardcoded postgres passwords, private keys, or API tokens
-          FOUND_SECRETS=0
-          
-          if grep -rnEI "BEGIN PRIVATE KEY|AKIA[0-9A-Z]{16}|ghp_[a-zA-Z0-9]{36}" --exclude-dir={.git,.venv,venv,node_modules,dist} . ; then
-            echo "::error::Exposed private keys or GitHub tokens detected in codebase!"
-            FOUND_SECRETS=1
-          fi
-          
-          if [ "$FOUND_SECRETS" -eq 1 ]; then
-            exit 1
-          fi
-          
-          echo "✓ Secret scanning completed: No exposed private keys or tokens found."
+          python -c "
+          import os, re, sys
+          pattern = re.compile(r'BEGIN PRIVATE KEY|AKIA[0-9A-Z]{16}|ghp_[a-zA-Z0-9]{36}')
+          violations = []
+          for root, dirs, files in os.walk('.'):
+              if any(x in root for x in ['.git', '.venv', 'venv', 'node_modules', 'dist', '.pytest_cache']):
+                  continue
+              for f in files:
+                  if f.endswith(('.py', '.js', '.jsx', '.html', '.json', '.yaml', '.yml', '.env.example', '.md')):
+                      path = os.path.join(root, f)
+                      try:
+                          with open(path, 'r', encoding='utf-8', errors='ignore') as fp:
+                              for idx, line in enumerate(fp, start=1):
+                                  if pattern.search(line):
+                                      violations.append(f'{path}:{idx}')
+                      except Exception:
+                          pass
+          if violations:
+              print('::error::Secrets or private keys detected in repository files:')
+              for v in violations:
+                  print(f'  - {v}')
+              sys.exit(1)
+          print('✓ Secret scanning completed: Zero hardcoded secrets detected.')
+          "

@@ -4,6 +4,7 @@ Queries NCBI Gene E-utilities API to retrieve official gene symbol, full name,
 cytogenetic location, gene summary, biological function, and genomic coordinates.
 Includes async timeouts and fallback protection.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -21,7 +22,9 @@ NCBI_GENE_ESUMMARY_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary
 TIMEOUT_SECONDS = 4.0
 
 
-def _http_get_json(url: str, params: dict[str, str], timeout: float = TIMEOUT_SECONDS) -> Optional[dict[str, Any]]:
+def _http_get_json(
+    url: str, params: dict[str, str], timeout: float = TIMEOUT_SECONDS
+) -> Optional[dict[str, Any]]:
     """Synchronous HTTP GET with timeout, executed in thread pool."""
     query_str = urllib.parse.urlencode(params)
     full_url = f"{url}?{query_str}"
@@ -59,7 +62,9 @@ async def fetch_ncbi_gene_evidence(
 
     try:
         esearch_res = await asyncio.wait_for(
-            loop.run_in_executor(None, _http_get_json, NCBI_GENE_ESEARCH_URL, esearch_params, TIMEOUT_SECONDS),
+            loop.run_in_executor(
+                None, _http_get_json, NCBI_GENE_ESEARCH_URL, esearch_params, TIMEOUT_SECONDS
+            ),
             timeout=TIMEOUT_SECONDS + 0.5,
         )
     except Exception as e:
@@ -84,7 +89,9 @@ async def fetch_ncbi_gene_evidence(
 
     try:
         esummary_res = await asyncio.wait_for(
-            loop.run_in_executor(None, _http_get_json, NCBI_GENE_ESUMMARY_URL, esummary_params, TIMEOUT_SECONDS),
+            loop.run_in_executor(
+                None, _http_get_json, NCBI_GENE_ESUMMARY_URL, esummary_params, TIMEOUT_SECONDS
+            ),
             timeout=TIMEOUT_SECONDS + 0.5,
         )
     except Exception as e:
@@ -113,7 +120,11 @@ async def fetch_ncbi_gene_evidence(
         chr_start = first_loc.get("chrstart", "N/A")
         chr_stop = first_loc.get("chrstop", "N/A")
 
-    coords_str = f"chr{chromosome}:{chr_start}-{chr_stop}" if chr_start != "N/A" else f"chr{chromosome} ({cytogenetic})"
+    coords_str = (
+        f"chr{chromosome}:{chr_start}-{chr_stop}"
+        if chr_start != "N/A"
+        else f"chr{chromosome} ({cytogenetic})"
+    )
 
     return {
         "ncbi_gene_id": str(gene_id),
@@ -121,7 +132,8 @@ async def fetch_ncbi_gene_evidence(
         "gene_name": gene_name,
         "chromosome": f"chr{chromosome}",
         "cytogenetic_location": cytogenetic or f"{chromosome}p/q",
-        "gene_summary": summary or f"{official_symbol} is an essential genomic loci associated with cellular pathway regulation.",
+        "gene_summary": summary
+        or f"{official_symbol} is an essential genomic loci associated with cellular pathway regulation.",
         "biological_function": summary[:250] + "..." if len(summary) > 250 else summary,
         "associated_diseases": [disease_name] if disease_name else ["Hereditary Phenotype"],
         "gene_coordinates": coords_str,

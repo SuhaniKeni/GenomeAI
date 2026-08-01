@@ -8,6 +8,7 @@ Project: GenomeAI
 """
 
 from pathlib import Path
+
 import pandas as pd
 
 DATASET = Path("datasets/processed/ai_training_dataset.csv")
@@ -37,9 +38,7 @@ def main():
     # --------------------------------------------------
 
     disease_counts = (
-        duplicates.groupby("AlleleID")["Disease"]
-        .nunique()
-        .reset_index(name="DiseaseCount")
+        duplicates.groupby("AlleleID")["Disease"].nunique().reset_index(name="DiseaseCount")
     )
 
     multi_disease = disease_counts[disease_counts["DiseaseCount"] > 1]
@@ -50,11 +49,7 @@ def main():
     # Same allele → multiple genes
     # --------------------------------------------------
 
-    gene_counts = (
-        duplicates.groupby("AlleleID")["Gene"]
-        .nunique()
-        .reset_index(name="GeneCount")
-    )
+    gene_counts = duplicates.groupby("AlleleID")["Gene"].nunique().reset_index(name="GeneCount")
 
     multi_gene = gene_counts[gene_counts["GeneCount"] > 1]
 
@@ -76,10 +71,7 @@ def main():
 
     print("\nDuplicate disease distribution:\n")
 
-    print(
-        duplicates["Disease"]
-        .value_counts()
-    )
+    print(duplicates["Disease"].value_counts())
 
     # --------------------------------------------------
     # Example duplicates
@@ -89,9 +81,7 @@ def main():
 
     example_ids = duplicates["AlleleID"].drop_duplicates().head(20)
 
-    example_rows = duplicates[
-        duplicates["AlleleID"].isin(example_ids)
-    ]
+    example_rows = duplicates[duplicates["AlleleID"].isin(example_ids)]
 
     print(
         example_rows[
@@ -108,20 +98,11 @@ def main():
     # Save reports
     # --------------------------------------------------
 
-    duplicates.to_csv(
-        REPORT_DIR / "duplicate_variants.csv",
-        index=False
-    )
+    duplicates.to_csv(REPORT_DIR / "duplicate_variants.csv", index=False)
 
-    multi_disease.to_csv(
-        REPORT_DIR / "multi_disease_alleles.csv",
-        index=False
-    )
+    multi_disease.to_csv(REPORT_DIR / "multi_disease_alleles.csv", index=False)
 
-    multi_gene.to_csv(
-        REPORT_DIR / "multi_gene_alleles.csv",
-        index=False
-    )
+    multi_gene.to_csv(REPORT_DIR / "multi_gene_alleles.csv", index=False)
 
     print("\nReports generated:")
 

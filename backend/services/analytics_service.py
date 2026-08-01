@@ -3,13 +3,13 @@
 Provides dataset-level statistics, class distributions, sequence length
 distributions, GC content analysis, and training progress data.
 """
+
 from __future__ import annotations
 
 import ast
 import json
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -29,8 +29,6 @@ DISEASE_LABELS = {
     8: "Ovarian Cancer",
     9: "Colorectal Cancer",
 }
-
-
 
 
 def _safe_literal_eval(val):
@@ -118,10 +116,7 @@ def compute_dataset_statistics() -> dict:
         "testing_samples": test_samples,
         "class_distribution": class_distribution,
         "sequence_length": {
-            "histogram": {
-                str(k): int(v) for k, v in
-                length_histogram.head(20).items()
-            },
+            "histogram": {str(k): int(v) for k, v in length_histogram.head(20).items()},
             "stats": length_stats,
         },
         "gc_content": gc_stats,

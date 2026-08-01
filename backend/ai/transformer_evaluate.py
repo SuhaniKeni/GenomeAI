@@ -1,23 +1,19 @@
 from pathlib import Path
 
-import torch
 import pandas as pd
-
-from sklearn.model_selection import train_test_split
+import torch
 from sklearn.metrics import (
     accuracy_score,
+    classification_report,
+    confusion_matrix,
+    f1_score,
     precision_score,
     recall_score,
-    f1_score,
-    confusion_matrix,
-    classification_report,
 )
-
+from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-
 from transformer_dataset import DNADataset
-
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 # ============================================================
 # Configuration
@@ -25,9 +21,7 @@ from transformer_dataset import DNADataset
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 
-DATASET_PATH = (
-    BASE_DIR / "datasets" / "processed" / "ai_training_dataset.csv"
-)
+DATASET_PATH = BASE_DIR / "datasets" / "processed" / "ai_training_dataset.csv"
 
 MODEL_DIR = BASE_DIR / "trained_models"
 
@@ -77,21 +71,14 @@ _, X_test, _, y_test = train_test_split(
 
 print("Loading tokenizer...")
 
-tokenizer = AutoTokenizer.from_pretrained(
-    MODEL_NAME,
-    trust_remote_code=True
-)
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, trust_remote_code=True)
 
 
 # ============================================================
 # Test Dataset
 # ============================================================
 
-test_dataset = DNADataset(
-    X_test,
-    y_test,
-    tokenizer
-)
+test_dataset = DNADataset(X_test, y_test, tokenizer)
 
 test_loader = DataLoader(
     test_dataset,
@@ -188,14 +175,7 @@ print(f"Recall   : {recall:.4f}")
 print(f"F1 Score : {f1:.4f}")
 
 print("\nClassification Report")
-print(classification_report(
-    targets,
-    predictions,
-    zero_division=0
-))
+print(classification_report(targets, predictions, zero_division=0))
 
 print("\nConfusion Matrix")
-print(confusion_matrix(
-    targets,
-    predictions
-))
+print(confusion_matrix(targets, predictions))

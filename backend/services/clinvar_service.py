@@ -4,14 +4,15 @@ Queries the NCBI Entrez ClinVar E-utilities API to retrieve variant records,
 clinical significance, review status, supporting submissions, and HGVS nomenclature.
 Includes async timeouts, connection pooling, and fallback protection.
 """
+
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
-from typing import Any, Optional
 import urllib.parse
 import urllib.request
-import json
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,9 @@ CLINVAR_ESUMMARY_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.f
 TIMEOUT_SECONDS = 4.0
 
 
-def _http_get_json(url: str, params: dict[str, str], timeout: float = TIMEOUT_SECONDS) -> Optional[dict[str, Any]]:
+def _http_get_json(
+    url: str, params: dict[str, str], timeout: float = TIMEOUT_SECONDS
+) -> Optional[dict[str, Any]]:
     """Synchronous HTTP GET with timeout, executed in thread pool."""
     query_str = urllib.parse.urlencode(params)
     full_url = f"{url}?{query_str}"
@@ -77,7 +80,9 @@ async def fetch_clinvar_evidence(
 
     try:
         esearch_res = await asyncio.wait_for(
-            loop.run_in_executor(None, _http_get_json, CLINVAR_ESEARCH_URL, esearch_params, TIMEOUT_SECONDS),
+            loop.run_in_executor(
+                None, _http_get_json, CLINVAR_ESEARCH_URL, esearch_params, TIMEOUT_SECONDS
+            ),
             timeout=TIMEOUT_SECONDS + 0.5,
         )
     except Exception as e:
@@ -102,7 +107,9 @@ async def fetch_clinvar_evidence(
 
     try:
         esummary_res = await asyncio.wait_for(
-            loop.run_in_executor(None, _http_get_json, CLINVAR_ESUMMARY_URL, esummary_params, TIMEOUT_SECONDS),
+            loop.run_in_executor(
+                None, _http_get_json, CLINVAR_ESUMMARY_URL, esummary_params, TIMEOUT_SECONDS
+            ),
             timeout=TIMEOUT_SECONDS + 0.5,
         )
     except Exception as e:
@@ -120,7 +127,9 @@ async def fetch_clinvar_evidence(
     title = result_data.get("title", "")
     germline_classification = result_data.get("germline_classification", {})
     clin_sig = germline_classification.get("description", "Pathogenic/Likely pathogenic")
-    review_status = germline_classification.get("review_status", "criteria provided, multiple submitters")
+    review_status = germline_classification.get(
+        "review_status", "criteria provided, multiple submitters"
+    )
     last_evaluated = germline_classification.get("last_evaluated", "Recently Evaluated")
     var_type = result_data.get("variant_type", "single nucleotide variant")
     accession = result_data.get("accession", f"RCV{target_id}")
@@ -134,7 +143,9 @@ async def fetch_clinvar_evidence(
             assoc_diseases.append(trait_name)
 
     genes = result_data.get("genes", [])
-    extracted_gene = genes[0].get("symbol", gene_symbol or "UNKNOWN") if genes else (gene_symbol or "UNKNOWN")
+    extracted_gene = (
+        genes[0].get("symbol", gene_symbol or "UNKNOWN") if genes else (gene_symbol or "UNKNOWN")
+    )
 
     return {
         "clinvar_id": str(target_id),
@@ -145,7 +156,8 @@ async def fetch_clinvar_evidence(
         "molecular_consequence": result_data.get("molecular_consequence", "missense variant"),
         "clinvar_accession": accession,
         "supporting_submissions": int(result_data.get("number_submitters", 1) or 1),
-        "associated_diseases": assoc_diseases or ([disease_name] if disease_name else ["Hereditary Disease"]),
+        "associated_diseases": assoc_diseases
+        or ([disease_name] if disease_name else ["Hereditary Disease"]),
         "hgvs": result_data.get("canonical_spdi", title),
         "last_updated": last_evaluated,
         "source": "NCBI ClinVar API",

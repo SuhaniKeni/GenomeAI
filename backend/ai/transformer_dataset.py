@@ -21,13 +21,9 @@ class DNADataset(Dataset):
     def __getitem__(self, idx):
 
         item = {
-            key: torch.tensor(value[idx], dtype=torch.long)
-            for key, value in self.encodings.items()
+            key: torch.tensor(value[idx], dtype=torch.long) for key, value in self.encodings.items()
         }
 
-        item["labels"] = torch.tensor(
-            self.labels[idx],
-            dtype=torch.long
-        )
+        item["labels"] = torch.tensor(self.labels[idx], dtype=torch.long)
 
         return item

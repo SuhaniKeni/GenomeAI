@@ -1,11 +1,10 @@
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 
-df = pd.read_csv(
-    BASE_DIR / "datasets" / "processed" / "ai_training_dataset.csv"
-)
+df = pd.read_csv(BASE_DIR / "datasets" / "processed" / "ai_training_dataset.csv")
 
 lengths = df["MutatedSequence"].astype(str).str.len()
 

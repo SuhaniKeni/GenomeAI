@@ -6,9 +6,9 @@ try:
     from backend.utils.tokenizer import prepare_multi_window_input, validate_dna_sequence
 except ImportError:
     try:
-        from .cnn_predictor import predict
         from ..utils.disease_mapper import get_disease
         from ..utils.tokenizer import prepare_multi_window_input, validate_dna_sequence
+        from .cnn_predictor import predict
     except ImportError:
         from predictor.cnn_predictor import predict
         from utils.disease_mapper import get_disease
@@ -42,10 +42,9 @@ def predict_disease(sequence: str):
     # Rank overall predictions
     all_predictions = []
     for label, probability in enumerate(overall_probs):
-        all_predictions.append({
-            "disease": get_disease(label),
-            "probability": round(float(probability) * 100, 2)
-        })
+        all_predictions.append(
+            {"disease": get_disease(label), "probability": round(float(probability) * 100, 2)}
+        )
     all_predictions.sort(key=lambda x: x["probability"], reverse=True)
 
     # Identify highest-confidence window
@@ -82,4 +81,3 @@ def predict_disease(sequence: str):
         "all_predictions": all_predictions[:5],
         "multi_window_summary": summary,
     }
-

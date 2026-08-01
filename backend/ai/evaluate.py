@@ -1,10 +1,10 @@
 from sklearn.metrics import (
     accuracy_score,
+    classification_report,
+    confusion_matrix,
+    f1_score,
     precision_score,
     recall_score,
-    f1_score,
-    confusion_matrix,
-    classification_report,
 )
 
 
@@ -19,7 +19,9 @@ def evaluate_model(model, X_test, y_test):
     print("=" * 60)
 
     print(f"Accuracy : {accuracy_score(actual, predicted):.4f}")
-    print(f"Precision: {precision_score(actual, predicted, average='weighted', zero_division=0):.4f}")
+    print(
+        f"Precision: {precision_score(actual, predicted, average='weighted', zero_division=0):.4f}"
+    )
     print(f"Recall   : {recall_score(actual, predicted, average='weighted', zero_division=0):.4f}")
     print(f"F1 Score : {f1_score(actual, predicted, average='weighted', zero_division=0):.4f}")
 

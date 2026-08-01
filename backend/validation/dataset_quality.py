@@ -7,13 +7,11 @@ Author: Suhani Keni
 Project: GenomeAI
 """
 
-from pathlib import Path
 import json
 import logging
-import re
+from pathlib import Path
 
 import pandas as pd
-
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 DATASET_PATH = BASE_DIR / "datasets" / "processed" / "ai_training_dataset.csv"
@@ -22,10 +20,7 @@ REPORT_DIR = BASE_DIR / "reports"
 REPORT_DIR.mkdir(exist_ok=True)
 
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname)s | %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
 
 
 # ==========================================================
@@ -49,6 +44,7 @@ def load_dataset():
 # Dataset Summary
 # ==========================================================
 
+
 def dataset_summary(df):
 
     return {
@@ -64,6 +60,7 @@ def dataset_summary(df):
 # Missing Values
 # ==========================================================
 
+
 def missing_values(df):
 
     missing = df.isnull().sum()
@@ -75,23 +72,20 @@ def missing_values(df):
 # Duplicate Analysis
 # ==========================================================
 
+
 def duplicate_analysis(df):
 
     return {
-        "Duplicate AlleleID":
-            int(df["AlleleID"].duplicated().sum()),
-
-        "Duplicate ReferenceSequence":
-            int(df["ReferenceSequence"].duplicated().sum()),
-
-        "Duplicate MutatedSequence":
-            int(df["MutatedSequence"].duplicated().sum()),
+        "Duplicate AlleleID": int(df["AlleleID"].duplicated().sum()),
+        "Duplicate ReferenceSequence": int(df["ReferenceSequence"].duplicated().sum()),
+        "Duplicate MutatedSequence": int(df["MutatedSequence"].duplicated().sum()),
     }
 
 
 # ==========================================================
 # Disease Distribution
 # ==========================================================
+
 
 def disease_distribution(df):
 
@@ -104,6 +98,7 @@ def disease_distribution(df):
 # Clinical Significance
 # ==========================================================
 
+
 def clinical_distribution(df):
 
     return df["ClinicalSignificance"].value_counts().to_dict()
@@ -112,6 +107,7 @@ def clinical_distribution(df):
 # ==========================================================
 # Gene Statistics
 # ==========================================================
+
 
 def gene_statistics(df):
 
@@ -122,6 +118,7 @@ def gene_statistics(df):
 # Sequence Validation
 # ==========================================================
 
+
 def validate_sequences(df):
 
     invalid_reference = 0
@@ -130,8 +127,7 @@ def validate_sequences(df):
     ref_lengths = []
     mut_lengths = []
 
-    for ref, mut in zip(df["ReferenceSequence"],
-                        df["MutatedSequence"]):
+    for ref, mut in zip(df["ReferenceSequence"], df["MutatedSequence"]):
 
         ref = str(ref).upper()
         mut = str(mut).upper()
@@ -146,24 +142,12 @@ def validate_sequences(df):
             invalid_mutated += 1
 
     return {
-
-        "Invalid Reference Sequences":
-            invalid_reference,
-
-        "Invalid Mutated Sequences":
-            invalid_mutated,
-
-        "Reference Length Min":
-            min(ref_lengths),
-
-        "Reference Length Max":
-            max(ref_lengths),
-
-        "Mutated Length Min":
-            min(mut_lengths),
-
-        "Mutated Length Max":
-            max(mut_lengths),
+        "Invalid Reference Sequences": invalid_reference,
+        "Invalid Mutated Sequences": invalid_mutated,
+        "Reference Length Min": min(ref_lengths),
+        "Reference Length Max": max(ref_lengths),
+        "Mutated Length Min": min(mut_lengths),
+        "Mutated Length Max": max(mut_lengths),
     }
 
 
@@ -171,26 +155,20 @@ def validate_sequences(df):
 # Mutation Validation
 # ==========================================================
 
+
 def mutation_validation(df):
 
-    no_change = (
-        df["ReferenceAllele"] ==
-        df["AlternateAllele"]
-    ).sum()
+    no_change = (df["ReferenceAllele"] == df["AlternateAllele"]).sum()
 
     invalid_position = (df["Position"] <= 0).sum()
 
-    return {
-
-        "No-change mutations": int(no_change),
-
-        "Invalid Positions": int(invalid_position)
-    }
+    return {"No-change mutations": int(no_change), "Invalid Positions": int(invalid_position)}
 
 
 # ==========================================================
 # Class Imbalance
 # ==========================================================
+
 
 def imbalance(df):
 
@@ -199,21 +177,16 @@ def imbalance(df):
     ratio = counts.max() / counts.min()
 
     return {
-
-        "Largest Class":
-            int(counts.max()),
-
-        "Smallest Class":
-            int(counts.min()),
-
-        "Imbalance Ratio":
-            round(ratio, 2)
+        "Largest Class": int(counts.max()),
+        "Smallest Class": int(counts.min()),
+        "Imbalance Ratio": round(ratio, 2),
     }
 
 
 # ==========================================================
 # Dataset Quality Score
 # ==========================================================
+
 
 def quality_score(results):
 
@@ -225,8 +198,8 @@ def quality_score(results):
         score -= 10
 
     invalid = (
-        results["Sequences"]["Invalid Reference Sequences"] +
-        results["Sequences"]["Invalid Mutated Sequences"]
+        results["Sequences"]["Invalid Reference Sequences"]
+        + results["Sequences"]["Invalid Mutated Sequences"]
     )
 
     if invalid > 0:
@@ -248,6 +221,7 @@ def quality_score(results):
 # ==========================================================
 # Save Reports
 # ==========================================================
+
 
 def save_reports(results):
 
@@ -282,6 +256,7 @@ def save_reports(results):
 # ==========================================================
 # Main
 # ==========================================================
+
 
 def main():
 

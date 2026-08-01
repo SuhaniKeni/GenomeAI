@@ -3,6 +3,7 @@
 Searches local ClinVar-derived genomic datasets (ai_training_dataset.csv, master_dataset.csv)
 FIRST before any external API queries, fulfilling the local-first evidence strategy.
 """
+
 from __future__ import annotations
 
 import csv
@@ -31,7 +32,7 @@ def _normalize_key(key: Any) -> str:
 
 def load_and_index_local_knowledge() -> None:
     """Index ai_training_dataset.csv into fast memory lookups."""
-    global _GENE_INDEX, _DISEASE_INDEX, _ALLELE_INDEX, _IS_INDEXED
+    global _IS_INDEXED
     if _IS_INDEXED:
         return
 
@@ -91,15 +92,60 @@ load_and_index_local_knowledge()
 
 # Mapping from predicted disease names to canonical gene targets if sequence-specific variant is absent
 DEFAULT_DISEASE_GENE_MAP = {
-    "breast cancer": {"gene": "BRCA1", "chr": "17", "coords": "chr17:43044295-43125483", "summary": "Pathogenic SNVs in BRCA1 disruption of DNA double-strand break repair."},
-    "hereditary breast & ovarian cancer": {"gene": "BRCA2", "chr": "13", "coords": "chr13:32315474-32400266", "summary": "High-penetrance hereditary predisposition to breast/ovarian carcinomas."},
-    "ovarian cancer": {"gene": "PALB2", "chr": "16", "coords": "chr16:23603471-23634893", "summary": "Partner and localizer of BRCA2 involved in homologous recombination."},
-    "colorectal cancer": {"gene": "APC", "chr": "5", "coords": "chr5:112737888-112846249", "summary": "Tumor suppressor gene mutated in adenomatous polyposis and colorectal carcinoma."},
-    "lung cancer": {"gene": "EGFR", "chr": "7", "coords": "chr7:55019017-55211628", "summary": "Epidermal growth factor receptor driving oncogenic signaling in non-small cell lung cancer."},
-    "alzheimer's disease": {"gene": "APOE", "chr": "19", "coords": "chr19:44905791-44909393", "summary": "Apolipoprotein E epsilon-4 allele major genetic risk factor for late-onset Alzheimer's."},
-    "parkinson's disease": {"gene": "LRRK2", "chr": "12", "coords": "chr12:40224954-40369285", "summary": "Leucine-rich repeat kinase 2 pathogenic variants causing familial Parkinson's disease."},
-    "leukemia": {"gene": "SF3B1", "chr": "2", "coords": "chr2:197397750-197484643", "summary": "Splicing factor 3b subunit 1 recurrently mutated in myelodysplastic syndromes and MDS/MPN."},
-    "type 2 diabetes": {"gene": "TCF7L2", "chr": "10", "coords": "chr10:112950250-113167576", "summary": "Transcription factor 7 like 2 strongly associated with susceptibility to Type 2 Diabetes."},
+    "breast cancer": {
+        "gene": "BRCA1",
+        "chr": "17",
+        "coords": "chr17:43044295-43125483",
+        "summary": "Pathogenic SNVs in BRCA1 disruption of DNA double-strand break repair.",
+    },
+    "hereditary breast & ovarian cancer": {
+        "gene": "BRCA2",
+        "chr": "13",
+        "coords": "chr13:32315474-32400266",
+        "summary": "High-penetrance hereditary predisposition to breast/ovarian carcinomas.",
+    },
+    "ovarian cancer": {
+        "gene": "PALB2",
+        "chr": "16",
+        "coords": "chr16:23603471-23634893",
+        "summary": "Partner and localizer of BRCA2 involved in homologous recombination.",
+    },
+    "colorectal cancer": {
+        "gene": "APC",
+        "chr": "5",
+        "coords": "chr5:112737888-112846249",
+        "summary": "Tumor suppressor gene mutated in adenomatous polyposis and colorectal carcinoma.",
+    },
+    "lung cancer": {
+        "gene": "EGFR",
+        "chr": "7",
+        "coords": "chr7:55019017-55211628",
+        "summary": "Epidermal growth factor receptor driving oncogenic signaling in non-small cell lung cancer.",
+    },
+    "alzheimer's disease": {
+        "gene": "APOE",
+        "chr": "19",
+        "coords": "chr19:44905791-44909393",
+        "summary": "Apolipoprotein E epsilon-4 allele major genetic risk factor for late-onset Alzheimer's.",
+    },
+    "parkinson's disease": {
+        "gene": "LRRK2",
+        "chr": "12",
+        "coords": "chr12:40224954-40369285",
+        "summary": "Leucine-rich repeat kinase 2 pathogenic variants causing familial Parkinson's disease.",
+    },
+    "leukemia": {
+        "gene": "SF3B1",
+        "chr": "2",
+        "coords": "chr2:197397750-197484643",
+        "summary": "Splicing factor 3b subunit 1 recurrently mutated in myelodysplastic syndromes and MDS/MPN.",
+    },
+    "type 2 diabetes": {
+        "gene": "TCF7L2",
+        "chr": "10",
+        "coords": "chr10:112950250-113167576",
+        "summary": "Transcription factor 7 like 2 strongly associated with susceptibility to Type 2 Diabetes.",
+    },
 }
 
 

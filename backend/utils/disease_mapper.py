@@ -12,6 +12,5 @@ LABELS = {
 }
 
 
-
 def get_disease(label: int):
-    return LABELS.get(label, "Healthy")
+    return LABELS.get(label, "Healthy")

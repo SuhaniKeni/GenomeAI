@@ -7,6 +7,7 @@ Orchestrates the local-first, hybrid genomic evidence pipeline:
 4. Compute independent Evidence Score (Very Strong, Strong, Moderate, Limited, No External Evidence)
 5. Return unified Evidence Object without modifying the CNN prediction.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -16,13 +17,13 @@ from typing import Any, Optional
 
 try:
     from backend.cache.evidence_cache import EvidenceCache
-    from backend.services.local_knowledge_service import search_local_evidence
     from backend.services.clinvar_service import fetch_clinvar_evidence
+    from backend.services.local_knowledge_service import search_local_evidence
     from backend.services.ncbi_service import fetch_ncbi_gene_evidence
 except ImportError:
     from cache.evidence_cache import EvidenceCache
-    from services.local_knowledge_service import search_local_evidence
     from services.clinvar_service import fetch_clinvar_evidence
+    from services.local_knowledge_service import search_local_evidence
     from services.ncbi_service import fetch_ncbi_gene_evidence
 
 logger = logging.getLogger(__name__)
@@ -167,16 +168,16 @@ async def build_genomic_evidence(
         or "Pathogenic / Likely Pathogenic"
     )
     final_review = (
-        (clinvar_ev.get("review_status") if clinvar_ev else None)
-        or "criteria provided, multiple submitters"
-    )
+        clinvar_ev.get("review_status") if clinvar_ev else None
+    ) or "criteria provided, multiple submitters"
 
     # Narrative Evidence Summary
     if sources:
         summary_text = (
             f"Prediction of '{prediction_disease}' ({cnn_confidence:.2f}% CNN confidence) "
             f"is supported by {evidence_score} evidence across {len(sources)} biological source(s): "
-            + ", ".join(sources) + f". Associated gene: {final_gene} ({final_chr})."
+            + ", ".join(sources)
+            + f". Associated gene: {final_gene} ({final_chr})."
         )
     else:
         summary_text = (

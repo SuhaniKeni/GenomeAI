@@ -3,6 +3,7 @@
 Loads the trained LSTM model and runs inference.
 Uses the same tokenisation as CNN (A=0, T=1, G=2, C=3, N=4).
 """
+
 from __future__ import annotations
 
 import time
@@ -20,6 +21,7 @@ def get_model():
     global _MODEL
     if _MODEL is None:
         from tensorflow.keras.models import load_model
+
         _MODEL = load_model(MODEL_PATH)
     return _MODEL
 
@@ -39,7 +41,6 @@ def predict(tokens: np.ndarray) -> dict:
     output = model(tokens, training=False)
     probabilities = output.numpy()[0] if hasattr(output, "numpy") else np.array(output)[0]
     elapsed_ms = round((time.perf_counter() - start) * 1000, 2)
-
 
     predicted_label = int(np.argmax(probabilities))
     confidence = float(np.max(probabilities))

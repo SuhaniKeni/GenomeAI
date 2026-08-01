@@ -9,6 +9,7 @@ Runs each model on a test set and collects:
 - Confusion matrix
 - Training / validation loss & accuracy curves
 """
+
 from __future__ import annotations
 
 import json
@@ -32,6 +33,7 @@ def _get_cnn():
     global _CNN
     if _CNN is None:
         from backend.predictor.cnn_predictor import predict as cnn_predict
+
         _CNN = cnn_predict
     return _CNN
 
@@ -40,6 +42,7 @@ def _get_lstm():
     global _LSTM
     if _LSTM is None:
         from backend.predictor.lstm_predictor import predict as lstm_predict
+
         _LSTM = lstm_predict
     return _LSTM
 
@@ -48,6 +51,7 @@ def _get_transformer():
     global _TRANSFORMER
     if _TRANSFORMER is None:
         from backend.predictor.transformer_predictor import predict as tf_predict
+
         _TRANSFORMER = tf_predict
     return _TRANSFORMER
 
@@ -62,6 +66,7 @@ def _load_test_set(sample_size: int = 200):
     tokens_list = []
     for _, row in sampled.iterrows():
         import ast
+
         t = np.array(ast.literal_eval(row["MutatedTokens"]), dtype=np.int32)
         tokens_list.append(t)
     return np.array(tokens_list), sampled["Label"].values
@@ -78,8 +83,13 @@ def _inference_time_ms(func, tokens: np.ndarray) -> tuple[dict, float]:
 def _compute_metrics(true_labels, pred_labels, probs_matrix, num_classes=8):
     """Compute accuracy, precision, recall, f1, and per-class ROC data."""
     from sklearn.metrics import (
-        accuracy_score, precision_score, recall_score, f1_score,
-        confusion_matrix, roc_curve, auc,
+        accuracy_score,
+        auc,
+        confusion_matrix,
+        f1_score,
+        precision_score,
+        recall_score,
+        roc_curve,
     )
     from sklearn.preprocessing import label_binarize
 
@@ -153,7 +163,7 @@ def run_benchmark(model_name: str = "all", sample_size: int = 200) -> dict:
                 print(f"  [{name}] sample {i} failed: {exc}")
                 continue
 
-        metrics = _compute_metrics(true_labels[:len(pred_labels)], pred_labels, probs_list)
+        metrics = _compute_metrics(true_labels[: len(pred_labels)], pred_labels, probs_list)
         metrics["inference_time_ms_mean"] = round(float(np.mean(times)), 2)
         metrics["inference_time_ms_std"] = round(float(np.std(times)), 2)
         metrics["samples_tested"] = len(pred_labels)
