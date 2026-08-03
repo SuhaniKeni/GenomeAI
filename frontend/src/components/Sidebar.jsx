@@ -3,16 +3,23 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Dna, Clock, FileCheck, FileText, Users, Building2,
-  Settings, Info, LogOut, ChevronLeft, ChevronRight, User, ShieldCheck, X
+  Settings, Info, LogOut, ChevronLeft, ChevronRight, User, ShieldCheck, X,
+  Stethoscope, Eye, Cpu, Sliders, BarChart2, Layers
 } from 'lucide-react';
 import { fetchCurrentUser, logoutUser } from '../api/client';
 
 const sidebarNavLinks = [
   { label: 'Dashboard', to: '/', icon: LayoutDashboard },
   { label: 'New Analysis', to: '/analysis', icon: Dna },
-  { label: 'History', to: '/history', icon: Clock },
+  { label: 'Doctor Portal', to: '/doctor-dashboard', icon: Stethoscope },
+  { label: 'DNA Visualizer', to: '/dna-visualizer', icon: Eye },
+  { label: 'Mutation Analysis', to: '/mutation-analysis', icon: Sliders },
   { label: 'Evidence', to: '/evidence', icon: FileCheck },
+  { label: 'History', to: '/history', icon: Clock },
   { label: 'Reports', to: '/reports', icon: FileText },
+  { label: 'AI Models', to: '/model-dashboard', icon: Cpu },
+  { label: 'Dataset Analytics', to: '/dataset-analytics', icon: BarChart2 },
+  { label: 'Research Workbench', to: '/research-dashboard', icon: Layers },
   { label: 'Users', to: '/users', icon: Users },
   { label: 'Lab Settings', to: '/lab-management', icon: Building2 },
   { label: 'Settings', to: '/settings', icon: Settings },

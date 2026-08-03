@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import { BarChart3 } from 'lucide-react';
-import StatCard from './StatCard.jsx';
+import StatCard from './common/StatCard';
 import styles from './StatsSection.module.css';
 
 export default function StatsSection({ items }) {

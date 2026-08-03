@@ -8,8 +8,8 @@ export default function StatCard({
   subtitle,
   icon: Icon,
   trend,
-  trendType = 'up', // 'up' | 'down' | 'neutral'
-  color = 'emerald', // 'emerald' | 'cyan' | 'purple' | 'amber' | 'blue'
+  trendType = 'up', // 'up' | 'down' | 'positive' | 'negative' | 'neutral'
+  color = 'emerald', // 'emerald' | 'cyan' | 'purple' | 'amber' | 'blue' | 'rose' | 'indigo'
   className = '',
 }) {
   const colorStyles = {
@@ -38,9 +38,21 @@ export default function StatCard({
       glow: 'from-amber-500/10 to-transparent',
       accent: 'text-amber-400',
     },
+    rose: {
+      iconBg: 'bg-rose-500/10 text-rose-400 border-rose-500/25',
+      glow: 'from-rose-500/10 to-transparent',
+      accent: 'text-rose-400',
+    },
+    indigo: {
+      iconBg: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/25',
+      glow: 'from-indigo-500/10 to-transparent',
+      accent: 'text-indigo-400',
+    },
   };
 
   const scheme = colorStyles[color] || colorStyles.emerald;
+  const isUp = trendType === 'up' || trendType === 'positive';
+  const isDown = trendType === 'down' || trendType === 'negative';
 
   return (
     <motion.div
@@ -67,16 +79,16 @@ export default function StatCard({
         {trend && (
           <span
             className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full border ${
-              trendType === 'up'
+              isUp
                 ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                : trendType === 'down'
+                : isDown
                 ? 'bg-rose-500/15 text-rose-400 border-rose-500/30'
                 : 'bg-slate-800 text-slate-300 border-slate-700'
             }`}
           >
-            {trendType === 'up' ? (
+            {isUp ? (
               <TrendingUp className="w-3 h-3" />
-            ) : trendType === 'down' ? (
+            ) : isDown ? (
               <TrendingDown className="w-3 h-3" />
             ) : null}
             {trend}

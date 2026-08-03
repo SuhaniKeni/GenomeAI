@@ -14,6 +14,13 @@ const LoginPage = lazy(() => import('./pages/LoginPage'));
 const RegisterLabPage = lazy(() => import('./pages/RegisterLabPage'));
 const LabUsersPage = lazy(() => import('./pages/LabUsersPage'));
 const LabManagementPage = lazy(() => import('./pages/LabManagementPage'));
+const DoctorDashboard = lazy(() => import('./pages/DoctorDashboard'));
+const DNAVisualizer = lazy(() => import('./pages/DNAVisualizer'));
+const ModelDashboard = lazy(() => import('./pages/ModelDashboard'));
+const MutationAnalysisPage = lazy(() => import('./pages/MutationAnalysisPage'));
+const DatasetAnalytics = lazy(() => import('./pages/DatasetAnalytics'));
+const ResearchDashboard = lazy(() => import('./pages/ResearchDashboard'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 
 function RouteLoader() {
   return (
@@ -35,6 +42,12 @@ export default function App() {
           <Route path="/" element={<AdminDashboard />} />
           <Route path="/analysis" element={<PredictPage />} />
           <Route path="/predict" element={<PredictPage />} />
+          <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+          <Route path="/dna-visualizer" element={<DNAVisualizer />} />
+          <Route path="/model-dashboard" element={<ModelDashboard />} />
+          <Route path="/mutation-analysis" element={<MutationAnalysisPage />} />
+          <Route path="/dataset-analytics" element={<DatasetAnalytics />} />
+          <Route path="/research-dashboard" element={<ResearchDashboard />} />
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/evidence" element={<EvidencePage />} />
           <Route path="/supporting-evidence" element={<EvidencePage />} />
@@ -42,7 +55,8 @@ export default function App() {
           <Route path="/clinical-report" element={<ClinicalReportPage />} />
           <Route path="/users" element={<LabUsersPage />} />
           <Route path="/lab-management" element={<LabManagementPage />} />
-          <Route path="/settings" element={<LabManagementPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/system-settings" element={<SettingsPage />} />
           <Route path="/about" element={<ApiDocs />} />
           <Route path="/api-docs" element={<ApiDocs />} />
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -197,6 +197,8 @@ def _run_model(sequence: str, model: str = "cnn"):
     result = predict_fn(tokens)
 
     probabilities = result["probabilities"]
+    if len(probabilities) < 10:
+        probabilities = list(probabilities) + [0.0] * (10 - len(probabilities))
     all_predictions = []
     for label, probability in enumerate(probabilities):
         all_predictions.append(
@@ -380,6 +382,8 @@ async def predict(
                 shap_explanation=result.get("shap_explanation"),
                 blast_data=result.get("blast"),
             )
+        except HTTPException:
+            raise
         except Exception as exc:
             logger.warning(f"Failed to save prediction history: {exc}")
 
@@ -807,42 +811,10 @@ def _get_current_user_from_header(
 
     try:
         if not authorization or not authorization.startswith("Bearer "):
-            user = db.query(User).filter(User.email == "admin@genomeai.lab").first()
-            if not user:
-                # Seed default lab and admin if missing
-                lab = Laboratory(
-                    laboratory_name="Central Genomics Institute",
-                    registration_number="LAB-CENTRAL-01",
-                    email="info@genomeai.lab",
-                )
-                db.add(lab)
-                db.commit()
-                db.refresh(lab)
-                user = User(
-                    lab_id=lab.lab_id,
-                    email="admin@genomeai.lab",
-                    full_name="Dr. Sarah Jenkins",
-                    password_hash=get_password_hash("admin123"),
-                    role="Administrator",
-                )
-                db.add(user)
-                db.commit()
-                db.refresh(user)
-
-            lab = db.query(Laboratory).filter(Laboratory.lab_id == user.lab_id).first()
-            return {
-                "user_id": user.user_id,
-                "lab_id": user.lab_id,
-                "email": user.email,
-                "full_name": user.full_name,
-                "role": user.role,
-                "password_hash": user.password_hash,
-                "laboratory": {
-                    "id": lab.lab_id if lab else 1,
-                    "name": lab.laboratory_name if lab else "Central Genomics Institute",
-                    "lab_code": lab.registration_number if lab else "LAB-CENTRAL-01",
-                },
-            }
+            raise HTTPException(
+                status_code=401,
+                detail={"message": "Authentication required. Missing or invalid Authorization header."},
+            )
 
         token = authorization.split(" ")[1]
         payload = decode_access_token(token)
