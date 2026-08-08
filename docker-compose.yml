@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: genomeai_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-}
+      - GENOMEAI_SECRET_KEY=${GENOMEAI_SECRET_KEY:-genomeai_default_secret_key_docker}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-jwt_default_secret_key_docker}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*,http://localhost,http://localhost:80,http://127.0.0.1,http://localhost:5173}
+    volumes:
+      # Mount trained_models explicitly to allow local development persistence if desired
+      # - ./trained_models:/app/trained_models
+      # Commented out by default to use the models built into the image
+      - db_data:/app/trained_models
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: genomeai_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  # Volume for local SQLite fallback database persistence
+  db_data:

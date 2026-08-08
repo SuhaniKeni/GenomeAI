@@ -466,6 +466,26 @@ Developers can run components independently:
 
 ---
 
+## 🐳 Docker Deployment
+
+GenomeAI includes production-ready Docker support. You can spin up the entire application (React Frontend + FastAPI Backend) using a single command.
+
+### 1. Build and Run Containers
+
+```powershell
+docker compose up --build
+```
+
+### 2. Access the Application
+
+* **Frontend**: `http://localhost`
+* **Backend Health**: `http://localhost:8000/health`
+* **API Docs**: `http://localhost:8000/docs`
+
+For detailed instructions, environment variable configuration, and Supabase database connection details, please refer to the [Docker Guide](docs/DOCKER.md).
+
+---
+
 ## 📊 Microsoft Clarity Analytics Configuration
 
 GenomeAI is integrated with `@microsoft/clarity` for user session analytics during production deployments.
